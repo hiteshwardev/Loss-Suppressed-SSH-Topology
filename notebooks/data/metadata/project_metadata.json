@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-01-11T07:03:34.081665",
+  "parameter_hash": "af34e5359bc1ed47d5e3850da780afecdd7a213836d5455d44f3743e847534e7",
+  "lattice_config": {
+    "lattice": {
+      "dimension": 1,
+      "lattice_type": "SSH",
+      "num_unit_cells": 60,
+      "boundary_condition": "open"
+    },
+    "geometry": {
+      "lattice_constant": 1.0,
+      "resonator_radius": 0.18,
+      "refractive_index": {
+        "resonator": 3.45,
+        "background": 1.0
+      }
+    },
+    "couplings": {
+      "intra_cell": 1.0,
+      "inter_cell": 0.6,
+      "coupling_units": "normalized"
+    },
+    "non_hermiticity": {
+      "enabled": true,
+      "type": "gain_loss",
+      "gain": {
+        "enabled": true,
+        "strength": 0.15
+      },
+      "loss": {
+        "enabled": true,
+        "strength": 0.1
+      },
+      "spatial_profile": "edge_weighted"
+    },
+    "frequency": {
+      "normalization": "coupling",
+      "omega_min": -3.0,
+      "omega_max": 3.0,
+      "num_kpoints": 400
+    }
+  },
+  "simulation_config": {
+    "bandstructure": {
+      "compute": true,
+      "k_sampling": "uniform",
+      "num_kpoints": 400,
+      "store_eigenvectors": true
+    },
+    "topology": {
+      "compute_invariants": true,
+      "invariant_type": "zak_phase",
+      "gauge_fixing": true,
+      "biorthogonal": true
+    },
+    "ldos": {
+      "compute_ldos": true,
+      "dipole_orientation": "x",
+      "frequency_window": {
+        "center": 0.0,
+        "width": 0.2
+      },
+      "spatial_resolution": 200
+    },
+    "disorder": {
+      "enabled": true,
+      "type": "on_site",
+      "strength": 0.05,
+      "realizations": 50,
+      "seed_offset": 1000
+    },
+    "parameter_sweeps": {
+      "enabled": true,
+      "sweep_parameters": [
+        "couplings.inter_cell",
+        "non_hermiticity.loss.strength"
+      ],
+      "sweep_ranges": {
+        "couplings.inter_cell": [
+          0.2,
+          1.2,
+          40
+        ],
+        "non_hermiticity.loss.strength": [
+          0.0,
+          0.3,
+          25
+        ]
+      }
+    },
+    "convergence": {
+      "energy_tolerance": 1e-09,
+      "max_iterations": 500
+    }
+  }
+}
