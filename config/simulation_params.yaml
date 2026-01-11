@@ -1,0 +1,42 @@
+# Simulation control parameters
+
+bandstructure:
+  compute: true
+  k_sampling: "uniform"
+  num_kpoints: 400
+  store_eigenvectors: true
+
+topology:
+  compute_invariants: true
+  invariant_type: "zak_phase"   # zak_phase, winding_number
+  gauge_fixing: true
+  biorthogonal: true
+
+ldos:
+  compute_ldos: true
+  dipole_orientation: "x"       # x, y, z
+  frequency_window:
+    center: 0.0
+    width: 0.2
+  spatial_resolution: 200
+
+disorder:
+  enabled: true
+  type: "on_site"
+  strength: 0.05
+  realizations: 50
+  seed_offset: 1000
+
+parameter_sweeps:
+  enabled: true
+  sweep_parameters:
+    - "couplings.inter_cell"
+    - "non_hermiticity.loss.strength"
+  sweep_ranges:
+    couplings.inter_cell: [0.2, 1.2, 40]
+    non_hermiticity.loss.strength: [0.0, 0.3, 25]
+
+convergence:
+  energy_tolerance: 1.0e-9
+  max_iterations: 500
+

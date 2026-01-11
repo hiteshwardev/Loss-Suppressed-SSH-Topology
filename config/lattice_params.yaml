@@ -1,0 +1,37 @@
+# Lattice and physical parameters
+
+lattice:
+  dimension: 1              # 1 or 2
+  lattice_type: "SSH"       # SSH, kagome, square
+  num_unit_cells: 60
+  boundary_condition: "open"  # open or periodic
+
+geometry:
+  lattice_constant: 1.0
+  resonator_radius: 0.18
+  refractive_index:
+    resonator: 3.45
+    background: 1.0
+
+couplings:
+  intra_cell: 1.0
+  inter_cell: 0.6
+  coupling_units: "normalized"
+
+non_hermiticity:
+  enabled: true
+  type: "gain_loss"          # gain_loss or radiative_loss
+  gain:
+    enabled: true
+    strength: 0.15
+  loss:
+    enabled: true
+    strength: 0.10
+  spatial_profile: "edge_weighted"  # uniform, edge_weighted
+
+frequency:
+  normalization: "coupling"
+  omega_min: -3.0
+  omega_max: 3.0
+  num_kpoints: 400
+

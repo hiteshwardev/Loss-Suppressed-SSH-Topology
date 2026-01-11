@@ -1,0 +1,52 @@
+# Plotting and figure management
+
+global:
+  dpi: 300
+  figure_format: "png"
+  transparent: false
+  tight_layout: true
+  colormap: "viridis"
+  font:
+    family: "serif"
+    size: 11
+
+# Each notebook owns its figure directory
+
+notebook_figures:
+
+  00_project_overview:
+    output_dir: "figures/00_project_overview"
+    auto_save: true
+
+  01_theory_nonhermitian_lattices:
+    output_dir: "figures/01_theory_nonhermitian_lattices"
+    auto_save: true
+
+  02_topological_invariants:
+    output_dir: "figures/02_topological_invariants"
+    auto_save: true
+
+  03_numerical_bandstructures:
+    output_dir: "figures/03_numerical_bandstructures"
+    auto_save: true
+
+  04_effective_mode_nanophotonics:
+    output_dir: figures/04_effective_mode_nanophotonics
+    auto_save: true
+
+  05_emitters_ldos_nanophotonics:
+    output_dir: "figures/05_ldos_emitter_coupling"
+    auto_save: true
+
+  06_disorder_robustness_ldos:
+    output_dir: "figures/06_disorder_robustness"
+    auto_save: true
+
+  07_parameter_sweep_topological_ldos:
+    output_dir: "figures/07_parameter_sweeps"
+    auto_save: true
+
+naming_convention:
+  include_timestamp: false
+  include_parameter_hash: true
+  separator: "__"
