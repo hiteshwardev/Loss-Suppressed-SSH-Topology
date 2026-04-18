@@ -1,17 +1,18 @@
 # Global project configuration
 
 project:
-  name: "Topology-driven Non-Hermitian Nanophotonics"
+  name: "Topology-Driven Non-Hermitian Nanophotonics"
   short_name: "NH_Topo_Nanophotonics"
-  author: "Your Name"
   description: >
-    Fully computational research project investigating non-Hermitian
-    topological nanophotonic lattices and their interaction with
-    quantum emitters via LDOS engineering.
-  version: "0.1.0"
+    Computational research project investigating non-Hermitian topological
+    photonic lattices with sublattice-selective loss. Studies how topological
+    edge modes in the SSH model enhance the local density of optical states
+    (LDOS) at the lattice boundary and the consequences for spontaneous emission
+    from quantum emitters.
+  version: "1.0.0"
 
 paths:
-  root: "."
+  root: ".."
   notebooks: "notebooks"
   config: "config"
   data:
@@ -21,17 +22,16 @@ paths:
   results: "results"
   figures: "figures"
   logs: "logs"
-  docs: "docs"
 
 execution:
   save_all_figures: true
-  overwrite_existing: false
+  overwrite_existing: true
   random_seed: 42
   floating_point_precision: "float64"
 
 numerics:
   backend: "numpy"
-  linear_algebra: "scipy"
+  linear_algebra: "scipy.linalg"
   eigensolver: "scipy.linalg.eig"
   tolerance: 1.0e-10
 
@@ -39,10 +39,8 @@ logging:
   enable_logging: true
   log_level: "INFO"
   log_to_file: true
-  log_directory: "logs/notebook_execution_logs"
+  log_directory: "logs"
 
 reproducibility:
   track_parameters: true
   hash_parameters: true
-  store_git_commit: true
-

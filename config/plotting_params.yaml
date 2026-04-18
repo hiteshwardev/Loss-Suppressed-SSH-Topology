@@ -2,15 +2,29 @@
 
 global:
   dpi: 300
-  figure_format: "png"
+  figure_format: "pdf"      # PDF 
+  raster_format: "png"      # PNG
   transparent: false
   tight_layout: true
-  colormap: "viridis"
   font:
     family: "serif"
+    math_fontfamily: "dejavuserif"
     size: 11
-
-# Each notebook owns its figure directory
+    label_size: 11
+    tick_size: 10
+    legend_size: 9
+    title_size: 12
+  line:
+    width: 1.8
+    edge_color: "#1f77b4"
+    bulk_color: "#d62728"
+    topological_color: "#2ca02c"
+    trivial_color: "#ff7f0e"
+  colormap: "viridis"
+  figure_widths:
+    single_column: 3.375   # inches (PRL single column)
+    double_column: 6.875   # inches (PRL double column)
+    notebook_wide: 8.0     # for notebook display
 
 notebook_figures:
 
@@ -19,34 +33,38 @@ notebook_figures:
     auto_save: true
 
   01_theory_nonhermitian_lattices:
-    output_dir: "figures/01_theory_nonhermitian_lattices"
+    output_dir: "figures/01_theory"
     auto_save: true
 
   02_topological_invariants:
-    output_dir: "figures/02_topological_invariants"
+    output_dir: "figures/02_topology"
     auto_save: true
 
   03_numerical_bandstructures:
-    output_dir: "figures/03_numerical_bandstructures"
+    output_dir: "figures/03_bands"
     auto_save: true
 
   04_effective_mode_nanophotonics:
-    output_dir: figures/04_effective_mode_nanophotonics
+    output_dir: "figures/04_effective_mode"
     auto_save: true
 
   05_emitters_ldos_nanophotonics:
-    output_dir: "figures/05_ldos_emitter_coupling"
+    output_dir: "figures/05_ldos"
     auto_save: true
 
   06_disorder_robustness_ldos:
-    output_dir: "figures/06_disorder_robustness"
+    output_dir: "figures/06_disorder"
     auto_save: true
 
   07_parameter_sweep_topological_ldos:
-    output_dir: "figures/07_parameter_sweeps"
+    output_dir: "figures/07_parameter_sweep"
+    auto_save: true
+
+  08_numerical_validation:
+    output_dir: "figures/08_validation"
     auto_save: true
 
 naming_convention:
   include_timestamp: false
-  include_parameter_hash: true
-  separator: "__"
+  include_parameter_hash: false
+  separator: "_"

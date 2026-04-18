@@ -3,40 +3,52 @@
 bandstructure:
   compute: true
   k_sampling: "uniform"
-  num_kpoints: 400
+  num_kpoints: 600
   store_eigenvectors: true
 
 topology:
   compute_invariants: true
-  invariant_type: "zak_phase"   # zak_phase, winding_number
-  gauge_fixing: true
-  biorthogonal: true
+  invariant_type: "winding_number"   # winding of off-diagonal Bloch element q(k)
+  num_k_winding: 4000                # k-points for winding number integral
+  # Sign convention: q(k) = t1 + t2 * exp(-ik)
+  # Winding = -1 for t2 > t1, +1 for t2 < t1. |winding| = 1 signals topology.
 
 ldos:
   compute_ldos: true
-  dipole_orientation: "x"       # x, y, z
-  frequency_window:
-    center: 0.0
-    width: 0.2
-  spatial_resolution: 200
+  eta: 0.05                  # Lorentzian broadening (units of t1)
+  omega_min: -3.0
+  omega_max:  3.0
+  num_omega:  800
+  edge_site: 0               # Site index for edge LDOS (A sublattice, left edge)
+  bulk_site: 20              # Site index for bulk LDOS (A sublattice, chain center)
+  # Enhancement metric: integrated LDOS over gap region
+  gap_integration_half_width: 0.15
 
 disorder:
   enabled: true
   type: "on_site"
-  strength: 0.05
-  realizations: 50
-  seed_offset: 1000
+  disorder_strengths: [0.0, 0.1, 0.2, 0.4, 0.6]   # W / t1
+  num_realizations: 100      # statistical ensemble size
+  seed: 42
+  # Note: gap size ≈ 2 * |t2 - t1| - correction ~ 0.8.
+  # Disorder W < 0.4 is sub-gap (weak/moderate); W > 0.4 exceeds gap (strong).
 
 parameter_sweeps:
   enabled: true
-  sweep_parameters:
-    - "couplings.inter_cell"
-    - "non_hermiticity.loss.strength"
-  sweep_ranges:
-    couplings.inter_cell: [0.2, 1.2, 40]
-    non_hermiticity.loss.strength: [0.0, 0.3, 25]
+  r_vals:       # t2 / t1
+    min: 0.5
+    max: 2.0
+    num: 30
+  gamma_vals:   # gamma / t1
+    min: 0.0
+    max: 0.8
+    num: 30
+  # Enhancement computed as integrated LDOS ratio over gap region
+
+finite_size:
+  enabled: true
+  N_vals: [5, 8, 10, 15, 20, 30, 40]
 
 convergence:
-  energy_tolerance: 1.0e-9
+  energy_tolerance: 1.0e-10
   max_iterations: 500
-
