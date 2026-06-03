@@ -10,8 +10,7 @@ the **symmetry conditions** under which that enhancement is genuinely
 > does **not** solve Maxwell's equations and makes **no** claim of full-wave
 > electromagnetic validation. Quantitative nanophotonic predictions (absolute
 > Purcell factors, radiative rates) are explicitly out of scope. What *is*
-> established is validated by three independent numerical methods (see
-> [`VALIDATION.md`](VALIDATION.md)).
+> established is validated by three independent numerical methods.
 
 ---
 
@@ -106,12 +105,13 @@ Requires Python ≥ 3.10. Core dependencies: NumPy, SciPy, Matplotlib, PyYAML.
 
 ## 7. Key results & their status
 
-See [`VALIDATION.md`](VALIDATION.md) for the full evidence table. In brief: the
-topological enhancement, its `t2/t1` and `η` dependence, the symmetry-resolved
-disorder protection, the analytic edge weight, and the multi-algorithm LDOS
-agreement are **High-confidence**. The nanophotonic mapping is a deliberately
-schematic CMT illustration (not an EM result). Honest publication-tier
-assessment is in [`VALIDATION.md`](VALIDATION.md).
+he lossy/passive SSH model is well established experimentally (e.g. Zeuner
+*et al.* PRL 2015; Weimann *et al.* Nat. Mater. 2017). The **defensible
+contribution** here is the *clean, control-equipped* demonstration that a
+**measurable optical observable (LDOS/Purcell)** inherits the BDI chiral
+protection in a **symmetry-class-specific** way — protected against bond
+disorder, not on-site — with trivial-phase controls and three-way numerical
+validation, plus an explicit `η`-independent topological order parameter `W₀`.
 
 ## License
 
