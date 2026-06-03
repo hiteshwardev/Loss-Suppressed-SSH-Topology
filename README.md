@@ -72,7 +72,6 @@ src/nh_topo/    the package — all physics lives here
   config.py        configuration loader
 notebooks/      00–08 thin drivers over the package (executed, with outputs)
 figures/        generated PDF (vector) + 300-dpi PNG
-VALIDATION.md   evidence table for every claim
 ```
 
 ## 5. Installation
