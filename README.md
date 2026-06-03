@@ -71,13 +71,9 @@ src/nh_topo/    the package — all physics lives here
   sweeps.py        parameter maps, parity-safe finite-size scaling
   plotting.py      publication-quality figures
   config.py        configuration loader
-scripts/        generate_all.py (rebuild every figure), build_notebooks.py
 notebooks/      00–08 thin drivers over the package (executed, with outputs)
-tests/          pytest suite codifying every validation
 figures/        generated PDF (vector) + 300-dpi PNG
 VALIDATION.md   evidence table for every claim
-REPRODUCIBILITY.md  environment, execution order, determinism
-CHANGELOG.md    full record of corrections from v1 → v2
 ```
 
 ## 5. Installation
@@ -90,26 +86,7 @@ pip install -e .            # or: pip install -r requirements.txt
 
 Requires Python ≥ 3.10. Core dependencies: NumPy, SciPy, Matplotlib, PyYAML.
 
-## 6. Reproduction workflow
-
-```bash
-# run the test suite (≈4 s) — every validation as an assertion
-pytest
-
-# regenerate EVERY figure from scratch (deterministic, ≈3 min)
-python scripts/generate_all.py
-
-# rebuild + re-execute the notebooks (optional)
-python scripts/build_notebooks.py
-jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
-```
-
-Every figure in `figures/` is produced by `scripts/generate_all.py`; the
-notebooks call the same package functions, so they cannot drift from the
-scripts. Determinism comes from a single seeded RNG per stochastic study (see
-[`REPRODUCIBILITY.md`](REPRODUCIBILITY.md)).
-
-## 7. Figure index
+## 6. Figure index
 
 | Figure | Content |
 |---|---|
@@ -127,7 +104,7 @@ scripts. Determinism comes from a single seeded RNG per stochastic study (see
 | `07_parameter_sweep/01_maps` | enhancement & `W₀` maps; loss suppresses `E` |
 | `08_validation/01_cross_validation` | three independent LDOS algorithms agree |
 
-## 8. Key results & their status
+## 7. Key results & their status
 
 See [`VALIDATION.md`](VALIDATION.md) for the full evidence table. In brief: the
 topological enhancement, its `t2/t1` and `η` dependence, the symmetry-resolved
