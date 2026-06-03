@@ -1,46 +1,39 @@
 # Global project configuration
 
 project:
-  name: "Topology-Driven Non-Hermitian Nanophotonics"
+  name: "Topological LDOS enhancement in a non-Hermitian (lossy) SSH lattice"
   short_name: "NH_Topo_Nanophotonics"
   description: >
-    Computational research project investigating non-Hermitian topological
-    photonic lattices with sublattice-selective loss. Studies how topological
-    edge modes in the SSH model enhance the local density of optical states
-    (LDOS) at the lattice boundary and the consequences for spontaneous emission
-    from quantum emitters.
-  version: "1.0.0"
+    Reproducible Python study of how the topological edge mode of a 1D SSH
+    photonic lattice with sublattice-selective loss enhances the local density
+    of optical states (LDOS) at the boundary, and of the symmetry conditions
+    under which that enhancement is topologically protected against disorder.
+  version: "2.0.0"
 
 paths:
-  root: ".."
-  notebooks: "notebooks"
+  # Relative to the repository root. Only directories that are actually produced
+  # by the workflow are listed (no phantom data/log directories).
   config: "config"
-  data:
-    raw: "data/raw"
-    processed: "data/processed"
-    metadata: "data/metadata"
-  results: "results"
+  notebooks: "notebooks"
+  scripts: "scripts"
   figures: "figures"
-  logs: "logs"
 
 execution:
   save_all_figures: true
-  overwrite_existing: true
   random_seed: 42
   floating_point_precision: "float64"
 
 numerics:
-  backend: "numpy"
-  linear_algebra: "scipy.linalg"
-  eigensolver: "scipy.linalg.eig"
-  tolerance: 1.0e-10
-
-logging:
-  enable_logging: true
-  log_level: "INFO"
-  log_to_file: true
-  log_directory: "logs"
+  backend: "numpy / scipy"
+  dense_eigensolver: "scipy.linalg.eig"       # 2N x 2N dense, full spectrum
+  green_function: "scipy.linalg.solve"        # (omega + i*eta - H) x = e_site
+  # All results in this project use DENSE linear algebra on small (<= a few
+  # hundred) dimensional matrices; no iterative solvers are used, so there is
+  # no risk of spectral pollution or non-convergence.
 
 reproducibility:
-  track_parameters: true
-  hash_parameters: true
+  # Determinism is achieved by seeding numpy.random.default_rng(seed) for every
+  # stochastic (disorder) calculation. See REPRODUCIBILITY.md for the exact
+  # environment and a one-command rebuild of every figure.
+  deterministic: true
+  rebuild_command: "python scripts/generate_all.py"

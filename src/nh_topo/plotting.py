@@ -1,45 +1,37 @@
+"""
+plotting.py
+===========
+Publication-quality figure functions. Each takes pre-computed data and returns
+(fig, axes); saving is handled by `save_fig` (vector PDF + 300-dpi PNG).
+
+Design: serif typography, colorblind-safe palette (Wong 2011), legends placed
+outside the data region, fully-labelled axes with physical units.
+"""
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from pathlib import Path
 
-# ── Style ───────────────────────────────────────────────────────────────────
 STYLE = {
-    "font.family":        "serif",
-    "mathtext.fontset":   "dejavuserif",
-    "font.size":          11,
-    "axes.labelsize":     11,
-    "axes.titlesize":     12,
-    "xtick.labelsize":    10,
-    "ytick.labelsize":    10,
-    "legend.fontsize":    9,
-    "legend.framealpha":  0.95,
-    "legend.edgecolor":   "0.75",
-    "lines.linewidth":    1.8,
-    "figure.dpi":         150,
-    "savefig.dpi":        300,
-    "savefig.bbox":       "tight",
+    "font.family": "serif", "mathtext.fontset": "dejavuserif",
+    "font.size": 11, "axes.labelsize": 11, "axes.titlesize": 12,
+    "xtick.labelsize": 10, "ytick.labelsize": 10, "legend.fontsize": 9,
+    "legend.framealpha": 0.95, "legend.edgecolor": "0.75",
+    "lines.linewidth": 1.8, "figure.dpi": 130, "savefig.dpi": 300,
+    "savefig.bbox": "tight", "axes.axisbelow": True,
 }
 
-COLORS = {
-    "edge":        "#1f77b4",
-    "bulk":        "#d62728",
-    "topological": "#2ca02c",
-    "trivial":     "#ff7f0e",
-    "protected":   "#2ca02c",
-    "lossy_edge":  "#9467bd",
-    "bulk_mode":   "#1f77b4",
-    "neutral":     "#7f7f7f",
+# Wong (2011) colorblind-safe palette
+C = {
+    "edge": "#0072B2", "bulk": "#D55E00", "protected": "#009E73",
+    "lossy": "#CC79A7", "neutral": "#555555", "accent": "#E69F00",
+    "blue2": "#56B4E9", "trivial": "#E69F00", "topo": "#009E73",
 }
 
-# Legend anchored BELOW the axis (multi-panel figures)
-_LEG_BELOW = dict(loc="upper center", bbox_to_anchor=(0.5, -0.22),
-                  borderaxespad=0.0, framealpha=0.95)
-
-# Legend anchored to the RIGHT of the axis (single-panel figures)
-_LEG_RIGHT = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0),
-                  borderaxespad=0.0, framealpha=0.95)
+_LEG_BELOW = dict(loc="upper center", bbox_to_anchor=(0.5, -0.22), borderaxespad=0.0)
+_LEG_RIGHT = dict(loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0)
 
 
 def apply_style():
@@ -47,542 +39,342 @@ def apply_style():
 
 
 def save_fig(fig, output_dir, name: str):
-    """Save as PDF (vector) and PNG (raster preview)."""
-    p = Path(output_dir)
-    p.mkdir(parents=True, exist_ok=True)
+    p = Path(output_dir); p.mkdir(parents=True, exist_ok=True)
     fig.savefig(p / f"{name}.pdf", dpi=300, bbox_inches="tight")
-    fig.savefig(p / f"{name}.png", dpi=150, bbox_inches="tight")
+    fig.savefig(p / f"{name}.png", dpi=300, bbox_inches="tight")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# NB01 – Theory
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_complex_spectrum(evals, edge_info, N):
+# ── NB01 theory ───────────────────────────────────────────────────────────────
+def plot_complex_spectrum(evals, edge_info, N, gamma):
     apply_style()
-    fig, ax = plt.subplots(figsize=(7.2, 4.8), constrained_layout=True)
-
-    protected = edge_info["protected_idx"]
-    lossy     = edge_info["lossy_idx"]
-    bulk_mask = np.ones(len(evals), dtype=bool)
-    bulk_mask[protected] = False
-    bulk_mask[lossy]     = False
-
-    ax.scatter(evals[bulk_mask].real, evals[bulk_mask].imag,
-               s=15, color=COLORS["bulk_mode"], alpha=0.8,
-               label="Bulk modes", zorder=3)
-    if len(protected):
-        ax.scatter(evals[protected].real, evals[protected].imag,
-                   s=130, color=COLORS["protected"], marker="*",
-                   label="Protected edge mode (A sublattice)", zorder=5)
+    fig, ax = plt.subplots(figsize=(7.4, 4.8), constrained_layout=True)
+    prot, lossy = edge_info["protected_idx"], edge_info["lossy_idx"]
+    bulk = np.ones(len(evals), bool); bulk[list(prot) + list(lossy)] = False
+    ax.scatter(evals[bulk].real, evals[bulk].imag, s=20, color=C["edge"],
+               alpha=0.8, label="Bulk modes", zorder=3)
+    if len(prot):
+        ax.scatter(evals[prot].real, evals[prot].imag, s=150, color=C["protected"],
+                   marker="*", edgecolor="k", linewidth=0.4,
+                   label="Protected edge (A): Im$(E)\\approx0$", zorder=5)
     if len(lossy):
-        ax.scatter(evals[lossy].real, evals[lossy].imag,
-                   s=80, color=COLORS["lossy_edge"], marker="s",
-                   label="Lossy edge mode (B sublattice)", zorder=5)
-
-    ax.axhline(0, color="gray", lw=0.7, ls="--")
-    ax.axvline(0, color="gray", lw=0.7, ls="--")
-    ax.set_xlabel(r"$\mathrm{Re}(E)\;[t_1]$")
-    ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
-    ax.set_title(f"Complex Spectrum — Non-Hermitian SSH ($N={N}$)")
+        ax.scatter(evals[lossy].real, evals[lossy].imag, s=90, color=C["lossy"],
+                   marker="s", edgecolor="k", linewidth=0.4,
+                   label="Lossy edge (B): Im$(E)\\approx-\\gamma$", zorder=5)
+    ax.axhline(0, color="0.6", lw=0.7, ls="--"); ax.axhline(-gamma, color="0.6", lw=0.7, ls=":")
+    ax.axvline(0, color="0.6", lw=0.7, ls="--")
+    ax.set_xlabel(r"$\mathrm{Re}(E)\;[t_1]$"); ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
+    ax.set_title(f"Complex spectrum — non-Hermitian SSH ($N={N}$, $\\gamma={gamma}\\,t_1$)")
     ax.legend(**_LEG_RIGHT)
     return fig, ax
 
 
-def plot_edge_characterization(evals, evecs, left_w, right_w,
-                               bio_density, edge_info, N):
-    apply_style()
-    fig, axes = plt.subplots(1, 3, figsize=(14, 5.8), constrained_layout=True)
-
-    protected = edge_info["protected_idx"]
-    lossy     = edge_info["lossy_idx"]
-    edge_bias = left_w - right_w
-    bulk_mask = np.ones(len(evals), dtype=bool)
-    bulk_mask[list(protected) + list(lossy)] = False
-
-    ax = axes[0]
-    ax.scatter(evals[bulk_mask].real, edge_bias[bulk_mask],
-               s=12, color=COLORS["bulk_mode"], alpha=0.7, label="Bulk")
-    if len(protected):
-        ax.scatter(evals[protected].real, edge_bias[protected],
-                   s=120, color=COLORS["protected"], marker="*",
-                   zorder=5, label="Protected edge")
-    if len(lossy):
-        ax.scatter(evals[lossy].real, edge_bias[lossy],
-                   s=80, color=COLORS["lossy_edge"], marker="s",
-                   zorder=5, label="Lossy edge")
-    ax.axhline(0, color="k", lw=0.8, ls="--")
-    ax.set_xlabel(r"$\mathrm{Re}(E)\;[t_1]$")
-    ax.set_ylabel(r"$W_\mathrm{left} - W_\mathrm{right}$")
-    ax.set_title("Boundary bias (biorthogonal)")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    ax.scatter(left_w[bulk_mask], right_w[bulk_mask],
-               s=12, color=COLORS["bulk_mode"], alpha=0.7, label="Bulk")
-    if len(protected):
-        ax.scatter(left_w[protected], right_w[protected],
-                   s=120, color=COLORS["protected"], marker="*",
-                   zorder=5, label="Protected edge")
-    if len(lossy):
-        ax.scatter(left_w[lossy], right_w[lossy],
-                   s=80, color=COLORS["lossy_edge"], marker="s",
-                   zorder=5, label="Lossy edge")
-    ax.plot([0, 0.8], [0, 0.8], "k--", lw=0.8, label="Diagonal")
-    ax.set_xlabel(r"$W_\mathrm{left}$ (biorthogonal)")
-    ax.set_ylabel(r"$W_\mathrm{right}$ (biorthogonal)")
-    ax.set_title("Left vs. right edge weight")
-    ax.set_xlim(-0.05, 0.85); ax.set_ylim(-0.05, 0.85)
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    ax = axes[2]
-    if len(protected):
-        idx     = protected[0]
-        density = np.real(bio_density[:, idx])
-        density = np.maximum(density, 0)
-        s = density.sum()
-        if s > 0:
-            density /= s
-        ax.bar(np.arange(0, 2*N, 2), density[0::2],
-               color=COLORS["protected"], alpha=0.85, width=0.8,
-               label="A sublattice (lossless)")
-        ax.bar(np.arange(1, 2*N, 2), density[1::2],
-               color=COLORS["lossy_edge"], alpha=0.65, width=0.8,
-               label="B sublattice (lossy)")
-        ax.set_xlabel("Site index $i$")
-        ax.set_ylabel(r"Biorthogonal density $\rho_i$")
-        ax.set_title("Protected edge mode profile")
-        ax.legend(ncol=2, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB02 – Topology
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_phase_diagram(t1, t2, nu_current, t2_scan, nu_scan, qk_cases):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5.5), constrained_layout=True)
-
-    ax = axes[0]
-    ax.plot(t2_scan / t1, nu_scan, lw=2, color=COLORS["bulk_mode"],
-            label=r"$|\nu|(t_2/t_1)$")
-    ax.axvline(1.0, color="k", ls="--", lw=1.2,
-               label=r"Phase boundary $t_2/t_1 = 1$")
-    ax.scatter([t2 / t1], [nu_current], color=COLORS["bulk"], s=130,
-               zorder=5, label=f"Operating point ($t_2/t_1={t2/t1:.2f}$)")
-    ax.set_xlabel(r"$t_2/t_1$")
-    ax.set_ylabel(r"Topological invariant $|\nu|$")
-    ax.set_title("Topological Phase Diagram")
-    ax.set_yticks([0, 1]); ax.set_ylim(-0.15, 1.45)
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    for label, color, q_vals in qk_cases:
-        ax.plot(q_vals.real, q_vals.imag, lw=1.8, label=label, color=color)
-    ax.scatter([0], [0], color="k", s=60, zorder=5, label="Origin")
-    ax.axhline(0, color="gray", lw=0.5)
-    ax.axvline(0, color="gray", lw=0.5)
-    ax.set_xlabel(r"$\mathrm{Re}[q(k)]$")
-    ax.set_ylabel(r"$\mathrm{Im}[q(k)]$")
-    ax.set_title(r"Trajectory of $q(k) = t_1 + t_2 e^{-ik}$")
-    ax.set_aspect("equal")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB03 – Band structures
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_bloch_bands(k_vals, bands, gamma):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), constrained_layout=True)
-
-    ax = axes[0]
-    ax.plot(k_vals / np.pi, bands[:, 0].real,
-            color=COLORS["bulk_mode"], lw=1.8, label=r"Band $-$")
-    ax.plot(k_vals / np.pi, bands[:, 1].real,
-            color=COLORS["bulk_mode"], lw=1.8, ls="--", label=r"Band $+$")
-    ax.set_xlabel(r"$k\,/\,\pi$")
-    ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
-    ax.set_title("Bloch Band Dispersion (Real Part)")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    ax = axes[1]
-    ax.plot(k_vals / np.pi, bands[:, 0].imag,
-            color=COLORS["bulk"], lw=1.8, label=r"Band $-$ (Im)")
-    ax.plot(k_vals / np.pi, bands[:, 1].imag,
-            color=COLORS["lossy_edge"], lw=1.8, ls="--", label=r"Band $+$ (Im)")
-    ax.axhline(-gamma, color="k", ls=":", lw=1.2,
-               label=r"$-\gamma$ (B-site loss rate)")
-    ax.axhline(0, color="gray", ls="-", lw=0.5)
-    ax.set_xlabel(r"$k\,/\,\pi$")
-    ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
-    ax.set_title("Bloch Band Decay Rates (Imaginary Part)")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    return fig, axes
-
-
-def plot_obc_spectrum(evals_obc, left_w, N, gap_hw):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.2), constrained_layout=True)
-
-    ax = axes[0]
-    sc = ax.scatter(np.arange(len(evals_obc)), evals_obc.real,
-                    c=left_w, cmap="plasma", s=22, vmin=0, vmax=0.55, zorder=3)
-    cbar = fig.colorbar(sc, ax=ax, pad=0.02, aspect=30)
-    cbar.set_label(r"Left-edge weight $\sum_{i<4}|\psi_i|^2$")
-    ax.axhspan(-gap_hw, gap_hw, color="gold", alpha=0.2,
-               label=f"Bulk gap region $|\\omega| < {gap_hw}\\,t_1$")
-    ax.set_xlabel("Eigenstate index (sorted by $\\mathrm{Re}(E)$)")
-    ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
-    ax.set_title(f"OBC Spectrum ($N={N}$) — colour = left-edge weight")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    sc2 = ax.scatter(evals_obc.real, evals_obc.imag,
-                     c=left_w, cmap="plasma", s=22, vmin=0, vmax=0.55)
-    cbar2 = fig.colorbar(sc2, ax=ax, pad=0.02, aspect=30)
-    cbar2.set_label("Left-edge weight")
-    ax.set_xlabel(r"$\mathrm{Re}(E)\;[t_1]$")
-    ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
-    ax.set_title("OBC Complex Spectrum (colour = left-edge weight)")
-
-    return fig, axes
-
-
-def plot_finite_size_convergence(N_vals, enh_vals, gap_obc, xi_theory):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(11, 5.2), constrained_layout=True)
-
-    ax = axes[0]
-    ax.plot(N_vals, enh_vals, "o-", color=COLORS["edge"], lw=1.8,
-            ms=7, label=r"Integrated LDOS enhancement $\mathcal{E}$")
-    ax.axvline(3 * xi_theory, color="gray", ls="--", lw=1.2,
-               label=rf"$N = 3\xi \approx {3*xi_theory:.0f}$ (convergence threshold)")
-    ax.set_xlabel("Number of unit cells $N$")
-    ax.set_ylabel(r"Enhancement $\mathcal{E}$")
-    ax.set_title("Finite-Size Convergence of LDOS Enhancement")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    ax.plot(N_vals, gap_obc, "s-", color=COLORS["topological"], lw=1.8,
-            ms=7, label="OBC band-edge gap (numerical)")
-    ax.set_xlabel("Number of unit cells $N$")
-    ax.set_ylabel(r"Band-edge gap $[t_1]$")
-    ax.set_title("Convergence of OBC Band Gap")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB04 – Nanophotonics
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_coupling_extraction(x, a, centers, modes, coupling_data,
-                             d_intra, d_inter):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), constrained_layout=True)
-
-    ax = axes[0]
-    n_show = min(3, len(modes) // 2)
-    blues  = plt.cm.Blues(np.linspace(0.5, 0.9, n_show))
-    reds   = plt.cm.Reds(np.linspace(0.5, 0.9, n_show))
-    for n in range(n_show):
-        ax.plot(x / a, modes[2*n],     color=blues[n], lw=1.5)
-        ax.plot(x / a, modes[2*n + 1], color=reds[n],  lw=1.5, ls="--")
-    for c in centers[:2 * n_show]:
-        ax.axvline(c / a, color="gray", lw=0.6, ls=":")
-    ax.set_xlabel(r"Position $x / a$")
-    ax.set_ylabel("Mode amplitude (normalised)")
-    ax.set_title("Localised Gaussian Mode Profiles")
-    ax.set_xlim(x[0] / a, centers[2 * n_show - 1] / a + 1)
-    ax.legend(handles=[
-        Line2D([0],[0], color="#4393c3", lw=1.5,
-               label="A-sublattice sites (lossless)"),
-        Line2D([0],[0], color="#d6604d", lw=1.5, ls="--",
-               label="B-sublattice sites (lossy)"),
-    ], ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    n_b  = min(10, len(coupling_data["t1_vals"]))
-    x_t1 = np.arange(n_b) * 2
-    x_t2 = np.arange(n_b) * 2 + 0.5
-    ax.bar(x_t1, coupling_data["t1_vals"][:n_b], width=0.4,
-           color=COLORS["edge"], alpha=0.85,
-           label=rf"$t_1$ (intra-cell, $d_1={d_intra:.2f}a$)")
-    ax.bar(x_t2, coupling_data["t2_vals"][:n_b], width=0.4,
-           color=COLORS["bulk"], alpha=0.75,
-           label=rf"$t_2$ (inter-cell, $d_2={d_inter:.2f}a$)")
-    ax.axhline(coupling_data["t1_mean"], color=COLORS["edge"],
-               ls="--", lw=1.2, label=r"$\langle t_1 \rangle$ (mean)")
-    ax.axhline(coupling_data["t2_mean"], color=COLORS["bulk"],
-               ls="--", lw=1.2, label=r"$\langle t_2 \rangle$ (mean)")
-    ax.set_xlabel("Bond index")
-    ax.set_ylabel("Normalised coupling strength")
-    ax.set_title(f"SSH Coupling Structure ($t_2/t_1 = {coupling_data['ratio']:.3f}$)")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB05 – LDOS
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_ldos_edge_vs_bulk(omegas, rho_edge, rho_bulk, gap_omegas,
-                           rho_e_gap, rho_b_gap, E_int,
-                           edge_site, bulk_site):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), constrained_layout=True)
-
-    ax = axes[0]
-    ax.plot(omegas, rho_edge, color=COLORS["edge"], lw=1.8,
-            label=f"Edge LDOS (site {edge_site}, A sublattice)")
-    ax.plot(omegas, rho_bulk, color=COLORS["bulk"], lw=1.8, ls="--",
-            label=f"Bulk LDOS (site {bulk_site}, A sublattice)")
-    ax.axvspan(gap_omegas[0], gap_omegas[-1], color="gold",
-               alpha=0.2, label="Gap integration window")
-    ax.set_xlabel(r"Frequency $\omega\;[t_1]$")
-    ax.set_ylabel(r"LDOS $\rho_i(\omega)\;[t_1^{-1}]$")
-    ax.set_title("Edge vs. Bulk LDOS")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    ax.fill_between(gap_omegas, rho_e_gap, alpha=0.25, color=COLORS["edge"])
-    ax.plot(gap_omegas, rho_e_gap, color=COLORS["edge"], lw=1.8,
-            label=f"Edge LDOS (site {edge_site})")
-    ax.fill_between(gap_omegas, rho_b_gap, alpha=0.25, color=COLORS["bulk"])
-    ax.plot(gap_omegas, rho_b_gap, color=COLORS["bulk"], lw=1.8, ls="--",
-            label=f"Bulk LDOS (site {bulk_site})")
-    ax.set_xlabel(r"Frequency $\omega\;[t_1]$")
-    ax.set_ylabel(r"LDOS $\rho_i(\omega)\;[t_1^{-1}]$")
-    ax.set_title(rf"Gap Region — Enhancement $\mathcal{{E}} = {E_int:.1f}\times$")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    return fig, axes
-
-
-def plot_ldos_spatial(rho_spatial, N, edge_site, bulk_site):
-    apply_style()
-    # Extra right margin for the 4-item legend
-    fig, ax = plt.subplots(figsize=(10.0, 4.5), constrained_layout=True)
-
-    ax.bar(np.arange(0, 2*N, 2), rho_spatial[0::2], width=0.8,
-           color=COLORS["edge"], alpha=0.85, label="A sublattice (lossless)")
-    ax.bar(np.arange(1, 2*N, 2), rho_spatial[1::2], width=0.8,
-           color=COLORS["bulk"], alpha=0.70, label="B sublattice (lossy)")
-    ax.axvline(edge_site - 0.5, color="#2ca02c", ls="--", lw=1.4,
-               label=f"Edge emitter site (site {edge_site})")
-    ax.axvline(bulk_site - 0.5, color="gray", ls="--", lw=1.4,
-               label=f"Bulk emitter site (site {bulk_site})")
-    ax.set_xlabel("Site index $i$")
-    ax.set_ylabel(r"$\rho_i(\omega=0)\;[t_1^{-1}]$")
-    ax.set_title(r"Spatial Map of LDOS at $\omega = 0$")
-    ax.legend(**_LEG_RIGHT)
-
-    return fig, ax
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB06 – Disorder
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_disorder_averaged_ldos(omegas, results, W_vals, gap_hw):
-    apply_style()
-    n     = min(len(W_vals), 6)
-    ncols = 3
-    nrows = (n + ncols - 1) // ncols
-    fig, axes = plt.subplots(nrows, ncols, figsize=(14, 5.5 * nrows),
-                             constrained_layout=True)
-    axes = np.array(axes).flatten()
-
-    for ax, W in zip(axes[:n], W_vals[:n]):
-        r = results[W]
-        ax.plot(omegas, r["edge_avg"], color=COLORS["edge"], lw=1.8,
-                label="Edge LDOS (disorder avg.)")
-        ax.plot(omegas, r["bulk_avg"], color=COLORS["bulk"], lw=1.8,
-                ls="--", label="Bulk LDOS (disorder avg.)")
-        ax.axvspan(-gap_hw, gap_hw, color="gold", alpha=0.2,
-                   label="Gap window")
-        ax.set_title(rf"$W = {W:.1f}\,t_1$ — "
-                     rf"$\langle\mathcal{{E}}\rangle = {r['enh_mean']:.1f}$")
-        ax.set_xlabel(r"$\omega\;[t_1]$")
-        ax.set_ylabel(r"LDOS (disorder avg.)")
-        ax.legend(ncol=1, **_LEG_BELOW)
-
-    for ax in axes[n:]:
-        ax.set_visible(False)
-
-    return fig, axes
-
-
-def plot_enhancement_statistics(W_vals, results, gap_size):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), constrained_layout=True)
-
-    W_arr    = np.array(W_vals)
-    enh_mean = np.array([results[W]["enh_mean"]   for W in W_vals])
-    enh_std  = np.array([results[W]["enh_std"]    for W in W_vals])
-    enh_med  = np.array([results[W]["enh_median"] for W in W_vals])
-
-    ax = axes[0]
-    ax.errorbar(W_arr, enh_mean, yerr=enh_std, fmt="o-",
-                color=COLORS["edge"], lw=1.8, ms=7, capsize=5,
-                label=r"Mean $\pm$ std")
-    ax.plot(W_arr, enh_med, "s--", color=COLORS["topological"],
-            lw=1.4, ms=6, label="Median")
-    ax.axhline(1.0, color="gray", ls=":", lw=1.2,
-               label=r"$\mathcal{E}=1$ (no enhancement)")
-    ax.axvline(gap_size / 2, color="k", ls="--", lw=1.2,
-               label=r"$W = \Delta/2$ (gap half-width)")
-    ax.set_xlabel(r"Disorder strength $W\;[t_1]$")
-    ax.set_ylabel(r"Enhancement $\mathcal{E}$")
-    ax.set_title("LDOS Enhancement vs. Disorder Strength")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    ax = axes[1]
-    bplot = ax.boxplot(
-        [results[W]["enh_all"] for W in W_vals],
-        labels=[f"{W:.1f}" for W in W_vals],
-        patch_artist=True,
-        medianprops=dict(color="k", lw=2),
-        whiskerprops=dict(lw=1.4),
-        capprops=dict(lw=1.4),
-        flierprops=dict(marker="o", ms=4, alpha=0.5),
-    )
-    for patch in bplot["boxes"]:
-        patch.set_facecolor("#9ecae1")
-        patch.set_alpha(0.85)
-    ax.axhline(1.0, color="gray", ls=":", lw=1.2,
-               label=r"$\mathcal{E}=1$ (no enhancement)")
-    ax.set_xlabel(r"Disorder strength $W\;[t_1]$")
-    ax.set_ylabel(r"Enhancement $\mathcal{E}$")
-    ax.set_title(f"Distribution — {len(results[W_vals[0]]['enh_all'])} realizations")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB07 – Parameter sweep
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_enhancement_map(r_vals, gamma_vals, enh, g_slices, r_slices):
-    apply_style()
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5.8), constrained_layout=True)
-
-    ax = axes[0]
-    vmax = float(np.percentile(enh, 97))
-    im = ax.imshow(enh, origin="lower", aspect="auto",
-                   extent=[r_vals[0], r_vals[-1],
-                           gamma_vals[0], gamma_vals[-1]],
-                   cmap="viridis", vmin=0, vmax=vmax)
-    ax.axvline(1.0, color="w", ls="--", lw=1.8,
-               label="Phase boundary $t_2/t_1 = 1$")
-    ax.set_xlabel(r"Coupling ratio $t_2/t_1$")
-    ax.set_ylabel(r"Loss rate $\gamma/t_1$")
-    ax.set_title(r"LDOS Enhancement $\mathcal{E}(t_2/t_1,\,\gamma/t_1)$")
-    cbar = fig.colorbar(im, ax=ax, pad=0.02, aspect=30)
-    cbar.set_label(r"Enhancement $\mathcal{E}$")
-    ax.legend(ncol=1, **_LEG_BELOW)
-
-    ax = axes[1]
-    for g, color in g_slices:
-        idx = np.argmin(np.abs(gamma_vals - g))
-        ax.plot(r_vals, enh[idx, :], lw=1.8,
-                label=rf"$\gamma/t_1 = {g:.1f}$", color=color)
-    ax.axvline(1.0, color="k", ls="--", lw=1.2,
-               label="Phase boundary")
-    ax.axhline(1.0, color="gray", ls=":", lw=1.0,
-               label=r"$\mathcal{E}=1$")
-    ax.set_xlabel(r"Coupling ratio $t_2/t_1$")
-    ax.set_ylabel(r"Enhancement $\mathcal{E}$ (log scale)")
-    ax.set_title(r"Enhancement — slices at fixed $\gamma/t_1$")
-    ax.set_yscale("log"); ax.set_ylim(0.5, None)
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    ax = axes[2]
-    for r, color in r_slices:
-        jdx = np.argmin(np.abs(r_vals - r))
-        ax.plot(gamma_vals, enh[:, jdx], lw=1.8,
-                label=rf"$t_2/t_1 = {r:.1f}$", color=color)
-    ax.axhline(1.0, color="gray", ls=":", lw=1.0,
-               label=r"$\mathcal{E}=1$")
-    ax.set_xlabel(r"Loss rate $\gamma/t_1$")
-    ax.set_ylabel(r"Enhancement $\mathcal{E}$")
-    ax.set_title(r"Enhancement — slices at fixed $t_2/t_1$")
-    ax.legend(ncol=2, **_LEG_BELOW)
-
-    return fig, axes
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NB08 – Validation
-# ══════════════════════════════════════════════════════════════════════════════
-
-def plot_pbc_obc(evals_obc, evals_pbc, N, gap_hw):
-    apply_style()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5.2), constrained_layout=True)
-
-    for ax, (evs, label, color) in zip(
-            axes,
-            [(evals_obc, "Open Boundary Conditions (OBC)", COLORS["edge"]),
-             (evals_pbc, "Periodic Boundary Conditions (PBC)", COLORS["bulk"])]):
-        ax.scatter(np.arange(len(evs)), evs, s=18, color=color,
-                   alpha=0.8, label="Eigenvalues $\\mathrm{Re}(E_n)$")
-        ax.axhspan(-gap_hw, gap_hw, color="gold", alpha=0.25,
-                   label=f"Gap region $|\\omega| < {gap_hw}\\,t_1$")
-        ax.set_title(f"{label} ($N={N}$)")
-        ax.set_xlabel("Eigenstate index (sorted by $\\mathrm{Re}(E)$)")
-        ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
-        ax.legend(ncol=1, **_LEG_BELOW)
-
-    return fig, axes
-
-
-def plot_localization_length(n_cells, intensity_A, xi_theory):
-    apply_style()
-    fig, ax = plt.subplots(figsize=(7.8, 4.8), constrained_layout=True)
-
-    fit_curve = np.exp(-2 * n_cells / xi_theory)
-    ax.semilogy(n_cells, intensity_A, "o", color=COLORS["edge"],
-                ms=7, label=r"Numerical $|\psi_A(n)|^2$ (A sublattice)")
-    ax.semilogy(n_cells, fit_curve, "--", color=COLORS["bulk"], lw=1.8,
-                label=(rf"Analytical $e^{{-2n/\xi}}$,"
-                       rf" $\xi={xi_theory:.2f}$ unit cells"))
-    ax.set_xlabel("Unit cell index $n$")
-    ax.set_ylabel(r"$|\psi_A(n)|^2$ (normalised to $n=0$)")
-    ax.set_title("Edge-Mode Exponential Spatial Decay")
-    ax.legend(**_LEG_RIGHT)
-
-    return fig, ax
-
-
-def plot_gf_vs_eigdecomp(omegas, rho_gf, rho_ed, site):
+def plot_edge_profile(bio_density, evecs, edge_info, N):
     apply_style()
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
+    prot = edge_info["protected_idx"]
+    sites = np.arange(2 * N)
+    ax = axes[0]
+    if len(prot):
+        idx = prot[0]
+        dens = np.abs(evecs[:, idx]) ** 2; dens /= dens.sum()
+        ax.bar(sites[0::2], dens[0::2], width=0.85, color=C["protected"],
+               alpha=0.9, label="A sublattice (lossless)")
+        ax.bar(sites[1::2], dens[1::2], width=0.85, color=C["lossy"],
+               alpha=0.7, label="B sublattice (lossy)")
+    ax.set_xlabel("Site index $i$"); ax.set_ylabel(r"$|\psi_i|^2$ (normalised)")
+    ax.set_title("Protected edge-mode profile"); ax.set_yscale("log")
+    ax.set_ylim(1e-8, 1); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    lossy = edge_info["lossy_idx"]
+    if len(lossy):
+        idx = lossy[0]; dens = np.abs(evecs[:, idx]) ** 2; dens /= dens.sum()
+        ax.bar(sites[0::2], dens[0::2], width=0.85, color=C["protected"], alpha=0.9,
+               label="A sublattice (lossless)")
+        ax.bar(sites[1::2], dens[1::2], width=0.85, color=C["lossy"], alpha=0.7,
+               label="B sublattice (lossy)")
+    ax.set_xlabel("Site index $i$"); ax.set_ylabel(r"$|\psi_i|^2$ (normalised)")
+    ax.set_title("Lossy edge-mode profile"); ax.set_yscale("log")
+    ax.set_ylim(1e-8, 1); ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+# ── NB02 topology ─────────────────────────────────────────────────────────────
+def plot_topology(t1, t2, r_scan, nu_scan, w0_scan, qk_cases):
+    apply_style()
+    fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.8), constrained_layout=True)
+    ax = axes[0]
+    ax.plot(r_scan, nu_scan, lw=2, color=C["edge"])
+    ax.axvline(1.0, color="k", ls="--", lw=1.2, label=r"transition $t_2/t_1=1$")
+    ax.scatter([t2 / t1], [1], color=C["bulk"], s=120, zorder=5,
+               label=f"operating point ({t2/t1:.2f})")
+    ax.set_xlabel(r"$t_2/t_1$"); ax.set_ylabel(r"$|\nu|$")
+    ax.set_yticks([0, 1]); ax.set_ylim(-0.15, 1.4)
+    ax.set_title("Topological invariant"); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    ax.plot(r_scan, w0_scan, lw=2, color=C["protected"])
+    ax.axvline(1.0, color="k", ls="--", lw=1.2)
+    ax.scatter([t2 / t1], [1 - (t1 / t2) ** 2], color=C["bulk"], s=120, zorder=5,
+               label=fr"$W_0={1-(t1/t2)**2:.3f}$")
+    ax.set_xlabel(r"$t_2/t_1$")
+    ax.set_ylabel(r"edge weight $W_0 = 1-(t_1/t_2)^2$")
+    ax.set_title("Edge spectral weight ($\\eta$-independent)"); ax.legend(**_LEG_BELOW)
+    ax = axes[2]
+    for label, color, q in qk_cases:
+        ax.plot(q.real, q.imag, lw=1.8, color=color, label=label)
+    ax.scatter([0], [0], color="k", s=55, zorder=5, label="origin")
+    ax.axhline(0, color="0.7", lw=0.5); ax.axvline(0, color="0.7", lw=0.5)
+    ax.set_xlabel(r"$\mathrm{Re}\,q(k)$"); ax.set_ylabel(r"$\mathrm{Im}\,q(k)$")
+    ax.set_aspect("equal"); ax.set_title(r"$q(k)=t_1+t_2e^{-ik}$"); ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+# ── NB03 bands ────────────────────────────────────────────────────────────────
+def plot_bloch_bands(k, bands, gamma, t1, t2):
+    apply_style()
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), constrained_layout=True)
+    ax = axes[0]
+    ax.plot(k / np.pi, bands[:, 0].real, color=C["edge"], lw=1.8, label="band $-$")
+    ax.plot(k / np.pi, bands[:, 1].real, color=C["bulk"], lw=1.8, ls="--", label="band $+$")
+    ax.axhspan(-abs(t2 - t1), abs(t2 - t1), color="0.85", alpha=0.5,
+               label=fr"Re-gap $|E|<|t_2-t_1|={abs(t2-t1):.1f}$")
+    ax.set_xlabel(r"$k/\pi$"); ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
+    ax.set_title("Bloch bands — real part"); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    ax.plot(k / np.pi, bands[:, 0].imag, color=C["edge"], lw=1.8, label="band $-$")
+    ax.plot(k / np.pi, bands[:, 1].imag, color=C["bulk"], lw=1.8, ls="--", label="band $+$")
+    ax.axhline(-gamma / 2, color="k", ls=":", lw=1.2, label=r"$-\gamma/2$ (passive PT)")
+    ax.set_xlabel(r"$k/\pi$"); ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
+    ax.set_title("Bloch bands — imaginary part"); ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+def plot_obc_spectrum(evals, left_w, N, gap_hw):
+    apply_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
+    ax = axes[0]
+    sc = ax.scatter(np.arange(len(evals)), evals.real, c=left_w, cmap="viridis",
+                    s=26, vmin=0, vmax=0.6, zorder=3)
+    fig.colorbar(sc, ax=ax, pad=0.02, aspect=30, label="left-edge weight")
+    ax.axhspan(-gap_hw, gap_hw, color=C["accent"], alpha=0.2,
+               label=fr"gap window $|E|<{gap_hw}\,t_1$")
+    ax.set_xlabel("eigenstate index (sorted by Re$E$)")
+    ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
+    ax.set_title(f"OBC spectrum ($N={N}$)"); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    sc2 = ax.scatter(evals.real, evals.imag, c=left_w, cmap="viridis", s=26, vmin=0, vmax=0.6)
+    fig.colorbar(sc2, ax=ax, pad=0.02, aspect=30, label="left-edge weight")
+    ax.set_xlabel(r"$\mathrm{Re}(E)\;[t_1]$"); ax.set_ylabel(r"$\mathrm{Im}(E)\;[t_1]$")
+    ax.set_title("OBC complex spectrum")
+    return fig, axes
+
+
+def plot_finite_size(N_vals, enh, w0, gap_obc, xi, w0_analytic):
+    apply_style()
+    fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.6), constrained_layout=True)
+    N_vals = np.array(N_vals)
+    ax = axes[0]
+    ax.plot(N_vals, enh, "o-", color=C["edge"], ms=7)
+    ax.axvline(3 * xi, color="0.5", ls="--", lw=1.2, label=fr"$N=3\xi\approx{3*xi:.0f}$")
+    ax.set_xlabel("system size $N$"); ax.set_ylabel(r"enhancement $\mathcal{E}$")
+    ax.set_title("LDOS enhancement vs $N$ (parity-safe bulk)"); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    ax.plot(N_vals, w0, "s-", color=C["protected"], ms=7, label="numerical $W_0$")
+    ax.axhline(w0_analytic, color="k", ls="--", lw=1.2,
+               label=fr"analytic $1-(t_1/t_2)^2={w0_analytic:.3f}$")
+    ax.set_xlabel("system size $N$"); ax.set_ylabel(r"edge weight $W_0$")
+    ax.set_title(r"Edge weight vs $N$ ($\eta$-independent)"); ax.legend(**_LEG_BELOW)
+    ax = axes[2]
+    ax.plot(N_vals, gap_obc, "^-", color=C["bulk"], ms=7)
+    ax.axhline(abs(1.2 - 0.8), color="k", ls=":", lw=1.0)
+    ax.set_xlabel("system size $N$"); ax.set_ylabel(r"OBC band-edge gap $[t_1]$")
+    ax.set_title("Band-edge gap vs $N$")
+    return fig, axes
+
+
+# ── NB04 nanophotonics ────────────────────────────────────────────────────────
+def plot_cmt(x, a, centers, modes, cal, d_intra, d_inter):
+    apply_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
+    ax = axes[0]
+    n_show = min(4, len(modes))
+    for n in range(n_show):
+        col = C["protected"] if n % 2 == 0 else C["lossy"]
+        ax.plot(x / a, modes[n], color=col, lw=1.4)
+        ax.axvline(centers[n] / a, color="0.7", lw=0.6, ls=":")
+    ax.set_xlim(centers[0] / a - 1, centers[n_show - 1] / a + 1)
+    ax.set_xlabel(r"position $x/a$"); ax.set_ylabel("mode amplitude (a.u.)")
+    ax.set_title(r"Evanescent modes $\sim e^{-|x-x_0|/L}$")
+    ax.legend(handles=[Line2D([0], [0], color=C["protected"], label="A sites"),
+                       Line2D([0], [0], color=C["lossy"], label="B sites")], **_LEG_BELOW)
+    ax = axes[1]
+    d = np.linspace(0.2, 1.0, 200)
+    ax.plot(d, cal["t0"] * np.exp(-d / cal["L"]), color=C["edge"], lw=2,
+            label=fr"$t(d)=t_0e^{{-d/L}},\ L={cal['L']:.3f}a$")
+    ax.scatter([d_intra], [cal["t1_reproduced"]], color=C["protected"], s=110, zorder=5,
+               label=fr"$t_1(d={d_intra:.2f}a)={cal['t1_reproduced']:.2f}$")
+    ax.scatter([d_inter], [cal["t2_reproduced"]], color=C["bulk"], s=110, zorder=5,
+               label=fr"$t_2(d={d_inter:.2f}a)={cal['t2_reproduced']:.2f}$")
+    ax.set_xlabel(r"edge-to-edge gap $d/a$"); ax.set_ylabel(r"coupling $[t_1]$")
+    ax.set_title(fr"Self-consistent CMT mapping ($t_2/t_1={cal['ratio_geom']:.2f}$)")
+    ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+# ── NB05 LDOS ─────────────────────────────────────────────────────────────────
+def plot_ldos(omegas, rho_edge, rho_bulk, rho_surf, gap_hw, E_int, eta,
+              edge_site, bulk_site):
+    apply_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
+    ax = axes[0]
+    ax.plot(omegas, rho_edge, color=C["edge"], lw=1.8, label=f"edge (site {edge_site}, A)")
+    ax.plot(omegas, rho_bulk, color=C["bulk"], lw=1.8, ls="--", label=f"bulk (site {bulk_site}, A)")
+    ax.plot(omegas, rho_surf, color=C["protected"], lw=1.2, ls=":",
+            label="semi-infinite edge (Sancho–Rubio)")
+    ax.axvspan(-gap_hw, gap_hw, color=C["accent"], alpha=0.2, label="gap window")
+    ax.set_xlabel(r"$\omega\;[t_1]$"); ax.set_ylabel(r"LDOS $\rho(\omega)\;[t_1^{-1}]$")
+    ax.set_title(fr"Edge vs bulk LDOS ($\eta={eta}\,t_1$)"); ax.legend(**_LEG_BELOW)
+    ax = axes[1]
+    m = np.abs(omegas) <= gap_hw
+    ax.fill_between(omegas[m], rho_edge[m], color=C["edge"], alpha=0.25)
+    ax.plot(omegas[m], rho_edge[m], color=C["edge"], lw=1.8, label="edge")
+    ax.fill_between(omegas[m], rho_bulk[m], color=C["bulk"], alpha=0.25)
+    ax.plot(omegas[m], rho_bulk[m], color=C["bulk"], lw=1.8, ls="--", label="bulk")
+    ax.set_xlabel(r"$\omega\;[t_1]$"); ax.set_ylabel(r"LDOS $\rho(\omega)\;[t_1^{-1}]$")
+    ax.set_title(fr"Gap region — $\mathcal{{E}}={E_int:.1f}\times$ (at $\eta={eta}\,t_1$)")
+    ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+def plot_eta_scaling(etas, enh, eta_op):
+    apply_style()
+    fig, ax = plt.subplots(figsize=(7.0, 4.6), constrained_layout=True)
+    ax.loglog(etas, enh, "o-", color=C["edge"], ms=6, label=r"$\mathcal{E}(\eta)$")
+    ax.axvline(eta_op, color="0.5", ls="--", lw=1.2, label=fr"operating $\eta={eta_op}$")
+    ax.set_xlabel(r"broadening $\eta\;[t_1]$"); ax.set_ylabel(r"enhancement $\mathcal{E}$")
+    ax.set_title(r"Enhancement ratio is $\eta$-dependent (bulk in-gap LDOS $\to0$)")
+    ax.legend(**_LEG_RIGHT)
+    return fig, ax
+
+
+def plot_ldos_spatial(rho, N, edge_site, bulk_site):
+    apply_style()
+    fig, ax = plt.subplots(figsize=(10, 4.4), constrained_layout=True)
+    sites = np.arange(2 * N)
+    ax.bar(sites[0::2], rho[0::2], width=0.85, color=C["protected"], alpha=0.9,
+           label="A sublattice (lossless)")
+    ax.bar(sites[1::2], rho[1::2], width=0.85, color=C["lossy"], alpha=0.7,
+           label="B sublattice (lossy)")
+    ax.axvline(edge_site, color=C["edge"], ls="--", lw=1.4, label=f"edge emitter (site {edge_site})")
+    ax.axvline(bulk_site, color="0.4", ls="--", lw=1.4, label=f"bulk emitter (site {bulk_site})")
+    ax.set_xlabel("site index $i$"); ax.set_ylabel(r"$\rho_i(\omega=0)\;[t_1^{-1}]$")
+    ax.set_title(r"Spatial LDOS map at $\omega=0$"); ax.legend(**_LEG_RIGHT)
+    return fig, ax
+
+
+# ── NB06 disorder ─────────────────────────────────────────────────────────────
+def plot_disorder_protection(W_vals, study):
+    apply_style()
+    fig, axes = plt.subplots(1, 3, figsize=(15.5, 4.7), constrained_layout=True)
+    W = np.array(W_vals)
+    topo = study["topological"]; triv = study["trivial"]
+
+    def series(d, key, stat):
+        return np.array([d[w][key][stat] for w in W_vals])
 
     ax = axes[0]
-    ax.plot(omegas, rho_gf, color=COLORS["edge"], lw=1.8,
-            label="Green's function LDOS")
-    ax.plot(omegas, rho_ed, color=COLORS["bulk"], lw=1.5, ls="--",
-            label="Eigendecomposition LDOS\n(complex-symmetric formula)")
-    ax.set_xlabel(r"$\omega\;[t_1]$")
-    ax.set_ylabel(r"LDOS $\rho(\omega)\;[t_1^{-1}]$")
-    ax.set_title(f"GF vs. Eigendecomposition — site {site}")
-    ax.legend(**_LEG_RIGHT)
+    ax.errorbar(W, series(topo["bond"], "disp", "mean"),
+                yerr=series(topo["bond"], "disp", "std"), fmt="o-", color=C["protected"],
+                capsize=4, label="bond (chiral-preserving)")
+    ax.errorbar(W, series(topo["on_site"], "disp", "mean"),
+                yerr=series(topo["on_site"], "disp", "std"), fmt="s--", color=C["bulk"],
+                capsize=4, label="on-site (chiral-breaking)")
+    ax.set_xlabel(r"disorder $W\;[t_1]$")
+    ax.set_ylabel(r"$\langle|\mathrm{Re}\,E_{\rm edge}|\rangle\;[t_1]$")
+    ax.set_title("Zero-mode pinning (protection diagnostic)"); ax.legend(**_LEG_BELOW)
 
     ax = axes[1]
-    ax.semilogy(omegas, np.abs(rho_gf - rho_ed) + 1e-20,
-                color=COLORS["neutral"], lw=1.5)
-    ax.set_xlabel(r"$\omega\;[t_1]$")
-    ax.set_ylabel(r"$|\rho_\mathrm{GF} - \rho_\mathrm{ED}|$")
-    ax.set_title("Pointwise Absolute Agreement (machine precision)")
+    ax.errorbar(W, series(topo["bond"], "enh", "mean"), yerr=series(topo["bond"], "enh", "std"),
+                fmt="o-", color=C["protected"], capsize=4, label="bond, topological")
+    ax.errorbar(W, series(topo["on_site"], "enh", "mean"), yerr=series(topo["on_site"], "enh", "std"),
+                fmt="s--", color=C["bulk"], capsize=4, label="on-site, topological")
+    ax.plot(W, series(triv["bond"], "enh", "mean"), "^:", color=C["trivial"],
+            label="bond, trivial (control)")
+    ax.plot(W, series(triv["on_site"], "enh", "mean"), "v:", color=C["neutral"],
+            label="on-site, trivial (control)")
+    ax.axhline(1.0, color="0.6", ls=":", lw=1.0)
+    ax.set_xlabel(r"disorder $W\;[t_1]$"); ax.set_ylabel(r"enhancement $\mathcal{E}$")
+    ax.set_title("Enhancement robustness with trivial controls"); ax.legend(**_LEG_BELOW)
 
+    ax = axes[2]
+    bp = ax.boxplot([topo["on_site"][w]["enh_all"] for w in W_vals],
+                    positions=W, widths=0.06, patch_artist=True,
+                    medianprops=dict(color="k", lw=1.6), manage_ticks=False)
+    for patch in bp["boxes"]:
+        patch.set_facecolor(C["blue2"]); patch.set_alpha(0.7)
+    ax.axhline(1.0, color="0.6", ls=":", lw=1.0)
+    ax.set_xlabel(r"disorder $W\;[t_1]$"); ax.set_ylabel(r"enhancement $\mathcal{E}$")
+    n = len(topo["on_site"][W_vals[0]]["enh_all"])
+    ax.set_title(f"On-site $\\mathcal{{E}}$ distribution ({n} realisations)")
+    return fig, axes
+
+
+# ── NB07 sweep ────────────────────────────────────────────────────────────────
+def plot_sweeps(r_vals, g_vals, enh, w0, g_slices):
+    apply_style()
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), constrained_layout=True)
+    ext = [r_vals[0], r_vals[-1], g_vals[0], g_vals[-1]]
+    ax = axes[0]
+    vmax = float(np.percentile(enh, 97))
+    im = ax.imshow(enh, origin="lower", aspect="auto", extent=ext, cmap="magma",
+                   vmin=0, vmax=vmax)
+    ax.axvline(1.0, color="w", ls="--", lw=1.6)
+    ax.set_xlabel(r"$t_2/t_1$"); ax.set_ylabel(r"$\gamma/t_1$")
+    ax.set_title(r"Enhancement $\mathcal{E}$ (97th-pct clip)")
+    fig.colorbar(im, ax=ax, pad=0.02, aspect=30, label=r"$\mathcal{E}$")
+    ax = axes[1]
+    im2 = ax.imshow(w0, origin="lower", aspect="auto", extent=ext, cmap="viridis", vmin=0, vmax=1)
+    ax.axvline(1.0, color="w", ls="--", lw=1.6)
+    ax.set_xlabel(r"$t_2/t_1$"); ax.set_ylabel(r"$\gamma/t_1$")
+    ax.set_title(r"Edge weight $W_0$ ($\eta$-independent)")
+    fig.colorbar(im2, ax=ax, pad=0.02, aspect=30, label=r"$W_0$")
+    ax = axes[2]
+    for g, color in g_slices:
+        j = int(np.argmin(np.abs(g_vals - g)))
+        ax.plot(r_vals, enh[j, :], lw=1.8, color=color, label=fr"$\gamma/t_1={g:.1f}$")
+    ax.axvline(1.0, color="k", ls="--", lw=1.2); ax.axhline(1.0, color="0.6", ls=":", lw=1.0)
+    ax.set_yscale("log"); ax.set_xlabel(r"$t_2/t_1$"); ax.set_ylabel(r"$\mathcal{E}$")
+    ax.set_title(r"Loss monotonically suppresses $\mathcal{E}$"); ax.legend(**_LEG_BELOW)
+    return fig, axes
+
+
+# ── NB08 validation ───────────────────────────────────────────────────────────
+def plot_validation(omegas, rho_gf, rho_ed, rho_surf, evals_obc, evals_pbc,
+                    n_cells, intensity_A, xi, gap_hw):
+    apply_style()
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 9.2), constrained_layout=True)
+    ax = axes[0, 0]
+    ax.plot(omegas, rho_gf, color=C["edge"], lw=2, label="Green's function (solve)")
+    ax.plot(omegas, rho_ed, color=C["bulk"], lw=1.4, ls="--", label="biorthogonal eig-decomp")
+    ax.plot(omegas, rho_surf, color=C["protected"], lw=1.0, ls=":", label="semi-infinite (Sancho–Rubio)")
+    ax.set_xlabel(r"$\omega\;[t_1]$"); ax.set_ylabel(r"$\rho(\omega)\;[t_1^{-1}]$")
+    ax.set_title("Three independent LDOS algorithms agree"); ax.legend(**_LEG_BELOW)
+    ax = axes[0, 1]
+    ax.scatter(np.arange(len(evals_obc)), evals_obc, s=16, color=C["edge"], label="OBC")
+    ax.scatter(np.arange(len(evals_pbc)), evals_pbc, s=16, color=C["bulk"], marker="x", label="PBC")
+    ax.axhspan(-gap_hw, gap_hw, color=C["accent"], alpha=0.2, label="gap window")
+    ax.set_xlabel("eigenstate index"); ax.set_ylabel(r"$\mathrm{Re}(E)\;[t_1]$")
+    ax.set_title("OBC has edge modes; PBC does not"); ax.legend(**_LEG_BELOW)
+    ax = axes[1, 0]
+    ax.semilogy(n_cells, intensity_A, "o", color=C["edge"], ms=6, label=r"numerical $|\psi_A(n)|^2$")
+    ax.semilogy(n_cells, np.exp(-2 * n_cells / xi), "--", color=C["bulk"], lw=1.8,
+                label=fr"$e^{{-2n/\xi}},\ \xi={xi:.2f}$")
+    ax.set_xlabel("unit cell $n$"); ax.set_ylabel(r"$|\psi_A(n)|^2$ (norm.)")
+    ax.set_title("Edge-mode exponential decay"); ax.legend(**_LEG_RIGHT)
+    ax = axes[1, 1]
+    ax.semilogy(omegas, np.abs(rho_gf - rho_ed) + 1e-20, color=C["neutral"], lw=1.4,
+                label="|GF $-$ eig-decomp|")
+    ax.semilogy(omegas, np.abs(rho_gf - rho_surf) + 1e-20, color=C["protected"], lw=1.0, ls=":",
+                label="|GF $-$ semi-infinite|")
+    ax.set_xlabel(r"$\omega\;[t_1]$"); ax.set_ylabel("absolute difference")
+    ax.set_title("Pairwise agreement"); ax.legend(**_LEG_BELOW)
     return fig, axes

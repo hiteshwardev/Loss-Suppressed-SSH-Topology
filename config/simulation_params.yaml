@@ -19,19 +19,39 @@ ldos:
   omega_min: -3.0
   omega_max:  3.0
   num_omega:  800
-  edge_site: 0               # Site index for edge LDOS (A sublattice, left edge)
-  bulk_site: 20              # Site index for bulk LDOS (A sublattice, chain center)
-  # Enhancement metric: integrated LDOS over gap region
+  edge_site: 0               # edge LDOS site: A sublattice (even index), left edge
+  bulk_site: 20              # bulk LDOS site: A sublattice (even index), chain centre
+  # IMPORTANT: edge and bulk reference sites MUST be on the SAME sublattice (A),
+  # otherwise the edge/bulk LDOS ratio mixes the lossless (A) and lossy (B)
+  # backgrounds and is not a like-for-like comparison. For N unit cells the
+  # central A site is index 2*(N//2) (always even); helper code enforces this.
   gap_integration_half_width: 0.15
+  # The integrated edge/bulk LDOS RATIO is eta-dependent (the bulk in-gap LDOS
+  # vanishes as eta->0 while the edge-pole weight stays O(1)); it is reported
+  # together with its eta-scaling. The PRIMARY, eta-INDEPENDENT topological
+  # observable is the edge-site spectral weight of the protected mode,
+  #     W0 = Re( vR[0,edge]^2 / norm_edge )  ->  1 - (t1/t2)^2   (semi-infinite),
+  # computed in src/nh_topo/ldos.py:edge_mode_spectral_weight.
 
 disorder:
   enabled: true
-  type: "on_site"
+  # Two physically distinct disorder classes are studied side by side:
+  #   "bond"   : random hopping t1,t2 -> t + U[-W/2,W/2]. PRESERVES chiral
+  #              (sublattice) symmetry -> the zero mode is topologically
+  #              protected (stays pinned at Re(E)=0). This is the symmetry
+  #              class against which SSH topology actually protects.
+  #   "on_site": random on-site energies. BREAKS chiral symmetry -> the zero
+  #              mode is NOT protected and drifts off Re(E)=0. Models realistic
+  #              resonance-frequency fabrication scatter.
+  # Both are run, each WITH a trivial-phase (t2<t1) control, so that
+  # "robust because topological" is separated from "robust because gapped".
+  classes: ["bond", "on_site"]
   disorder_strengths: [0.0, 0.1, 0.2, 0.4, 0.6]   # W / t1
-  num_realizations: 100      # statistical ensemble size
+  num_realizations: 200      # statistical ensemble size per (class, W)
   seed: 42
-  # Note: gap size ≈ 2 * |t2 - t1| - correction ~ 0.8.
-  # Disorder W < 0.4 is sub-gap (weak/moderate); W > 0.4 exceeds gap (strong).
+  trivial_t2_over_t1: 0.6    # control point in the trivial phase (|nu|=0)
+  # Gap context: bulk Re-gap half-width = |t2 - t1| = 0.4 t1. W < 0.4 is
+  # sub-gap (weak/moderate); W ~ 0.4 reaches the gap edge; W > 0.4 is strong.
 
 parameter_sweeps:
   enabled: true

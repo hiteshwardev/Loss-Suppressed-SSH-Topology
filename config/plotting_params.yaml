@@ -15,11 +15,12 @@ global:
     legend_size: 9
     title_size: 12
   line:
+    # Colorblind-safe palette (Wong, Nature Methods 2011), as used in plotting.py
     width: 1.8
-    edge_color: "#1f77b4"
-    bulk_color: "#d62728"
-    topological_color: "#2ca02c"
-    trivial_color: "#ff7f0e"
+    edge_color: "#0072B2"
+    bulk_color: "#D55E00"
+    topological_color: "#009E73"
+    trivial_color: "#E69F00"
   colormap: "viridis"
   figure_widths:
     single_column: 3.375   # inches (PRL single column)

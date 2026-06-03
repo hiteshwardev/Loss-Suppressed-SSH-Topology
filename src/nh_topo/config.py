@@ -62,6 +62,8 @@ def get_physics_params(cfg: dict) -> dict:
         "W_vals":  sc["disorder"]["disorder_strengths"],
         "n_real":  sc["disorder"]["num_realizations"],
         "seed":    sc["disorder"]["seed"],
+        "disorder_classes": sc["disorder"]["classes"],
+        "trivial_t2_over_t1": sc["disorder"]["trivial_t2_over_t1"],
         "N_vals_fs": sc["finite_size"]["N_vals"],
     }
 

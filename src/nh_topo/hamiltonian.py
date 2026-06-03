@@ -3,45 +3,73 @@ hamiltonian.py
 ==============
 Real-space non-Hermitian SSH Hamiltonians.
 
-Model: 1D chain, N unit cells, 2 sites per cell (A=even, B=odd indices).
-Non-Hermiticity: loss rate gamma on B sublattice only.
+Model: 1D chain, N unit cells, 2 sites per cell (A = even index, B = odd index).
+Non-Hermiticity: loss rate gamma on the B sublattice only.
 
-    H = sum_n [ t1 |n,A><n,B| + t2 |n+1,A><n,B| + h.c. ]
+    H = sum_n [ t1_n |n,A><n,B| + t2_n |n+1,A><n,B| + h.c. ]
+      + sum_i eps_i |i><i|
       - i*gamma * sum_n |n,B><n,B|
 
-Properties enforced:
-  - H = H^T  (complex-symmetric, reciprocal hopping)
-  - Im(E_n) <= 0 for all n  (passive system, positive LDOS guaranteed)
-  - No non-Hermitian skin effect (reciprocal hoppings)
+Structural properties enforced by construction (real, reciprocal hopping +
+real on-site disorder + purely imaginary B-loss):
+
+  - H = H^T            (complex-symmetric; left eigvec = (right eigvec)^T)
+  - Im(E_n) in [-gamma, 0]   (passive system; LDOS provably >= 0, see ldos.py)
+  - No non-Hermitian skin effect (hopping is reciprocal: H_ij = H_ji)
+
+The general builder `build_ssh_general` accepts per-bond couplings and per-site
+on-site energies so that bond (chiral-preserving) and on-site (chiral-breaking)
+disorder are constructed from the same primitive.
 """
 
 import numpy as np
 
 
-def build_ssh(N: int, t1: float, t2: float, gamma: float) -> np.ndarray:
+def build_ssh_general(N, gamma, t1_bonds, t2_bonds, onsite=None):
     """
-    Finite non-Hermitian SSH Hamiltonian with OBC and sublattice-B loss.
+    General finite non-Hermitian SSH Hamiltonian (OBC) with B-sublattice loss.
 
     Parameters
     ----------
-    N     : int    Number of unit cells.
-    t1    : float  Intra-cell hopping amplitude.
-    t2    : float  Inter-cell hopping amplitude.
-    gamma : float  Loss rate on B sublattice (>= 0).
+    N         : int                   Number of unit cells.
+    gamma     : float                 Loss rate on every B site (>= 0).
+    t1_bonds  : float or array (N,)   Intra-cell hoppings (cell n: A_n <-> B_n).
+    t2_bonds  : float or array (N-1,) Inter-cell hoppings (B_n <-> A_{n+1}).
+    onsite    : None or array (2N,)    Real on-site energies (default: zeros).
 
     Returns
     -------
-    H : ndarray, shape (2N, 2N), dtype complex128
+    H : ndarray (2N, 2N), complex128
     """
     dim = 2 * N
     H = np.zeros((dim, dim), dtype=np.complex128)
+
+    t1_bonds = np.broadcast_to(np.asarray(t1_bonds, float), (N,))
+    t2_bonds = np.broadcast_to(np.asarray(t2_bonds, float), (max(N - 1, 0),))
+
     for n in range(N):
         a, b = 2 * n, 2 * n + 1
-        H[b, b] = -1j * gamma          # loss on B sublattice
-        H[a, b] = H[b, a] = t1        # intra-cell hopping
+        H[b, b] = -1j * gamma                      # loss on B sublattice
+        H[a, b] = H[b, a] = t1_bonds[n]            # intra-cell hopping
         if n < N - 1:
-            H[a + 2, b] = H[b, a + 2] = t2  # inter-cell hopping
+            H[a + 2, b] = H[b, a + 2] = t2_bonds[n]  # inter-cell hopping
+
+    if onsite is not None:
+        onsite = np.asarray(onsite, float)
+        if onsite.shape != (dim,):
+            raise ValueError(f"onsite must have shape ({dim},), got {onsite.shape}")
+        H[np.diag_indices(dim)] += onsite          # real shifts keep H = H^T
+
     return H
+
+
+def build_ssh(N: int, t1: float, t2: float, gamma: float) -> np.ndarray:
+    """
+    Homogeneous non-Hermitian SSH Hamiltonian with OBC and B-sublattice loss.
+
+    Convenience wrapper around `build_ssh_general` with uniform couplings.
+    """
+    return build_ssh_general(N, gamma, t1, t2, onsite=None)
 
 
 def build_ssh_pbc(N: int, t1: float, t2: float, gamma: float) -> np.ndarray:
@@ -61,37 +89,44 @@ def bloch_hamiltonian(k: float, t1: float, t2: float, gamma: float) -> np.ndarra
     2x2 Bloch Hamiltonian H(k) for the loss-only SSH model.
 
         H(k) = [[0,         q(k)    ],
-                [q*(k),    -i*gamma ]]
+                [q*(k),    -i*gamma ]],     q(k) = t1 + t2 * exp(-ik).
 
-    where q(k) = t1 + t2 * exp(-ik).
-
-    The lower-left element q*(k) follows from H = H^T (real symmetric hopping
-    combined with purely imaginary diagonal).
-
-    Parameters
-    ----------
-    k     : float   Crystal momentum in [-pi, pi).
-    t1    : float   Intra-cell hopping.
-    t2    : float   Inter-cell hopping.
-    gamma : float   Loss rate on B sublattice.
+    The lower-left element q*(k) follows from H = H^T. gamma enters only the
+    diagonal, so it does not affect q(k) (hence the winding number is
+    gamma-independent).
     """
     q = t1 + t2 * np.exp(-1j * k)
     return np.array([[0.0 + 0j,   q         ],
                      [q.conj(),  -1j * gamma]], dtype=np.complex128)
 
 
+def exceptional_point_threshold(t1: float, t2: float) -> float:
+    """
+    Bulk exceptional-point / PT-breaking loss threshold.
+
+    H(k) eigenvalues are  -i*gamma/2 +/- sqrt(|q(k)|^2 - (gamma/2)^2).
+    The radicand is real for all k iff gamma/2 < min_k |q(k)| = |t2 - t1|, so
+
+        gamma_EP = 2 * |t2 - t1|.
+
+    For gamma < gamma_EP both bulk bands share Im(E) = -gamma/2 (unbroken,
+    "passive PT"); for gamma > gamma_EP the bands split in Im(E) near the
+    Re-gap centre (broken). NOTE this is 2|t2-t1|, not |t2-t1|.
+    """
+    return 2.0 * abs(t2 - t1)
+
+
 def verify_properties(H: np.ndarray) -> dict:
     """
     Sanity-check key mathematical properties of the Hamiltonian.
 
-    Returns dict with keys: is_symmetric, all_passive, is_hermitian.
+    Returns dict with keys: is_symmetric, all_passive, is_hermitian, dim.
     """
     import scipy.linalg as la
     evals = la.eigvals(H)
     return {
-        "is_symmetric":  np.allclose(H, H.T),
+        "is_symmetric":  bool(np.allclose(H, H.T)),
         "all_passive":   bool(np.all(evals.imag <= 1e-9)),
-        "is_hermitian":  np.allclose(H, H.conj().T),
-        "dim":           H.shape[0],
+        "is_hermitian":  bool(np.allclose(H, H.conj().T)),
+        "dim":           int(H.shape[0]),
     }
-
