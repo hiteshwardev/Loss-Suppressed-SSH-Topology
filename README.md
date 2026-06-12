@@ -1,4 +1,4 @@
-# Topological LDOS Enhancement in a Non-Hermitian (Lossy) SSH Lattice
+# Symmetry-resolved topological protection of the boundary local density of states in a passive non-Hermitian Su–Schrieffer–Heeger lattice
 
 A fully reproducible Python research project on how the **topological edge mode**
 of a one-dimensional SSH photonic lattice with **sublattice-selective loss**
