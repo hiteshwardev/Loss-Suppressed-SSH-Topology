@@ -6,12 +6,6 @@ enhances the **local density of optical states (LDOS)** at the boundary — and 
 the **symmetry conditions** under which that enhancement is genuinely
 *topologically protected* against disorder.
 
-> **Honesty statement.** This is a tight-binding / coupled-mode-theory study. It
-> does **not** solve Maxwell's equations and makes **no** claim of full-wave
-> electromagnetic validation. Quantitative nanophotonic predictions (absolute
-> Purcell factors, radiative rates) are explicitly out of scope. What *is*
-> established is validated by three independent numerical methods.
-
 ---
 
 ## 1. Scientific motivation
@@ -104,14 +98,10 @@ Requires Python ≥ 3.10. Core dependencies: NumPy, SciPy, Matplotlib, PyYAML.
 
 ## 7. Key results & their status
 
-he lossy/passive SSH model is well established experimentally (e.g. Zeuner
+The lossy/passive SSH model is well established experimentally (e.g. Zeuner
 *et al.* PRL 2015; Weimann *et al.* Nat. Mater. 2017). The **defensible
 contribution** here is the *clean, control-equipped* demonstration that a
 **measurable optical observable (LDOS/Purcell)** inherits the BDI chiral
 protection in a **symmetry-class-specific** way — protected against bond
 disorder, not on-site — with trivial-phase controls and three-way numerical
 validation, plus an explicit `η`-independent topological order parameter `W₀`.
-
-## License
-
-MIT — see [`LICENSE`](LICENSE).
