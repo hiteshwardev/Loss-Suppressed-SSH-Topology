@@ -1,109 +1,267 @@
-# Sublattice-symmetry protection of the boundary LDOS in a lossy SSH lattice
+# Loss-Suppressed Hybridisation and Sublattice-Symmetry Protection of the Boundary Local Density of States in a Non-Hermitian SSH Lattice
 
-Loss on one sublattice of a Su–Schrieffer–Heeger chain is usually treated as a nuisance that
-degrades an otherwise topological boundary mode. For the *stability* of that mode the opposite
-turns out to be true. This project identifies the symmetry responsible, works out its consequences,
-and confirms the picture with a full-wave solution of Maxwell's equations in a dielectric structure.
+**Author**
 
-## Results
+**Hitesh Kumar Singh**  
+Department of Physics  
+Kurukshetra University  
+Kurukshetra, Haryana, India
 
-**The chain is not chirally symmetric.** For `H = H₀ − iγP_B` the Hermitian relation
-`σ_z H σ_z = −H` fails by exactly `2γ`. Once the mean decay rate is removed by a uniform imaginary
-shift, the operator instead obeys the non-Hermitian sublattice symmetry
+📧 **Email:** hiteshwardevthakur@gmail.com  
+🔗 **ORCID:** https://orcid.org/0009-0008-1583-4848
 
+---
+
+Repository accompanying the research article:
+
+> **Loss-suppressed hybridisation and sublattice-symmetry protection of the boundary local density of states in a non-Hermitian Su–Schrieffer–Heeger lattice**
+
+---
+
+## Overview
+
+This repository contains the complete computational framework used in the accompanying study on passive non-Hermitian topology in the Su–Schrieffer–Heeger (SSH) model with sublattice-selective loss.
+
+The work demonstrates that dissipation can *stabilize*, rather than degrade, topological boundary modes. By correctly classifying the system within the non-Hermitian **CS† symmetry class**, the study shows that sublattice loss suppresses finite-size hybridisation, produces an edge exceptional point, pins the real energy of the protected boundary mode, and doubles its measurable boundary spectral weight.
+
+The repository is fully reproducible. Running the notebook from a clean environment regenerates every figure, table, and numerical result reported in the accompanying manuscript.
+
+---
+
+## Scientific Highlights
+
+This repository reproduces the principal results of the paper:
+
+- Correct classification of the passive lossy SSH chain using non-Hermitian **CS†** symmetry.
+- Demonstration that Hermitian chiral symmetry fails by exactly **2γ**.
+- Analytical and numerical description of the edge exceptional point.
+- Loss-induced suppression of finite-size hybridisation.
+- Exact pinning of the protected edge-mode real energy.
+- Doubling of the measurable boundary spectral weight.
+- Local density of states (LDOS) calculations using Green-function methods.
+- Symmetry-resolved disorder studies.
+- Full-wave electromagnetic validation using Maxwell's equations.
+- Comprehensive numerical verification and regression testing.
+
+---
+
+# Repository Structure
+
+```text
+.
+├── 00_LAB.ipynb
+│   Complete executable study containing the theory, methods,
+│   numerical computations, validation, analysis, and figure generation.
+│
+├── src/
+│   └── nh_topo/
+│       ├── hamiltonian.py
+│       │   SSH model construction and non-Hermitian Hamiltonians.
+│       │
+│       ├── symmetry.py
+│       │   CS† symmetry classification, effective two-level model,
+│       │   and edge exceptional-point theory.
+│       │
+│       ├── spectrum.py
+│       │   Eigenvalue calculations, edge-mode identification,
+│       │   and overlap-based mode tracking.
+│       │
+│       ├── ldos.py
+│       │   Green-function LDOS calculations, positivity,
+│       │   spectral-weight evaluation, and sum-rule verification.
+│       │
+│       ├── analytics.py
+│       │   Semi-infinite surface Green-function calculations
+│       │   using iterative decimation.
+│       │
+│       ├── topology.py
+│       │   Winding-number calculations and analytical
+│       │   edge-state properties.
+│       │
+│       ├── disorder.py
+│       │   Bond and on-site disorder ensembles,
+│       │   hybridisation studies, and control analyses.
+│       │
+│       ├── sweeps.py
+│       │   Parameter sweeps, finite-size scaling,
+│       │   and phase-diagram generation.
+│       │
+│       ├── nanophotonics.py
+│       │   Coupled-mode calibration linking the SSH lattice
+│       │   to dielectric photonic structures.
+│       │
+│       ├── electromagnetics.py
+│       │   Finite-Difference Frequency-Domain (FDFD)
+│       │   Maxwell solver for full-wave validation.
+│       │
+│       └── figures.py
+│           Publication-quality figure generation
+│           under an enforced layout contract.
+│
+├── tests/
+│   Automated verification and regression test suite.
+│
+├── figures/
+│   Generated publication-quality figures
+│   (vector PDF and 400 dpi PNG).
+│
+├── results/
+│   Generated numerical outputs including
+│   results.json containing all reported values.
+│
+├── requirements.txt
+│   Python dependencies.
+│
+└── README.md
 ```
-σ_z H̃ σ_z = −H̃†,        H̃ = H + i(γ/2)𝟙
-```
 
-which makes the spectrum symmetric about the imaginary axis rather than forcing eigenvalues into
-± pairs. It pins the real energy of a self-conjugate mode and constrains its decay rate not at all.
+---
 
-**Loss suppresses finite-size hybridisation.** A mode can leave the imaginary axis only by pairing
-with a partner at equal decay rate. Loss separates the two boundary modes in the imaginary
-direction and removes that partner, closing the channel. Under identical bond-disorder ensembles at
-N = 20 the Hermitian chain splits by 2–3 × 10⁻⁴ while the lossy chain stays at 2–4 × 10⁻¹⁶.
+# Numerical Methods
 
-**The boundary doublet has its own exceptional point** at `γ = 2δ₀`, where `δ₀ ~ exp(−N/ξ)` is the
-bare Hermitian splitting. At N = 10 this sits at 2.3 × 10⁻², some 35 times below the bulk
-exceptional point at `2|t₂ − t₁|`. The two-level form `±√(δ₀² − γ²/4)` reproduces the full spectrum
-to 7 × 10⁻¹⁴.
+The study combines several complementary computational approaches:
 
-**Crossing it doubles the boundary spectral weight**, from `W₀/2` to `W₀ = 1 − (t₁/t₂)²`. The
-measured ratio is 2.0000 for every chain length from N = 8 to 30 — a parameter-free signature that
-needs no absolute calibration to observe.
+- Dense LAPACK eigensolvers
+- Green-function calculations
+- Biorthogonal eigendecomposition
+- Semi-infinite iterative decimation
+- Topological invariant calculations
+- Statistical disorder averaging
+- Finite-size scaling
+- Coupled-mode theory
+- Finite-Difference Frequency-Domain (FDFD) Maxwell simulations
 
-**A full-wave calculation confirms it.** In a chain of silicon-like rods the gap-averaged boundary
-enhancement is 7.88 in the topological geometry against 0.69 in the trivial control, and material
-loss attenuates it by 2.7×, the same trade-off the lattice model predicts.
+---
 
-## Running the study
+# Validation
+
+The repository includes an automated verification suite covering:
+
+- Non-Hermitian CS† symmetry
+- Spectrum pairing under **E → −E***
+- Two-level model predictions
+- Green-function consistency
+- LDOS positivity
+- Spectral sum rules
+- Localisation length
+- Hybridisation suppression
+- Boundary spectral-weight doubling
+- Numerical convergence
+
+These tests reproduce the numerical tolerances reported in the manuscript.
+
+---
+
+# Reproducibility
+
+Executing the notebook from beginning to end reproduces
+
+- all manuscript figures,
+- all numerical tables,
+- all reported values,
+- all validation metrics,
+- `results/results.json`.
+
+Every published number is generated directly from the code contained in this repository.
+
+---
+
+# Installation
+
+Clone the repository
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+git clone https://github.com/hiteshwardev/Loss-Suppressed-SSH-Topology.git
+```
+
+Move into the project directory
+
+```bash
+cd Loss-Suppressed-SSH-Topology
+```
+
+Install the required Python packages
+
+```bash
 pip install -r requirements.txt
-jupyter lab notebook.ipynb
 ```
+---
 
-`notebook.ipynb` *is* the study. Running it from top to bottom performs every calculation, writes
-every figure to `figures/` in vector and raster form, stores all numerical results in
-`results/results.json`, and prints a consolidated summary at the end. It takes roughly twelve
-minutes on a single core, most of that in the disorder ensembles and the full-wave sweeps.
+# Running the Study
 
-To check the implementation:
+Launch Jupyter Notebook
 
 ```bash
-pytest                      # 72 tests
-pytest -m "not slow"        # skip the full-wave solves
+jupyter notebook
 ```
 
-## Layout
+Open
 
-```
-notebook.ipynb   the complete study: theory, methods, computation, results
-src/nh_topo/     reusable routines called from the notebook
-  hamiltonian.py      model construction
-  symmetry.py         CS-dagger classification, two-level model, edge exceptional point
-  spectrum.py         diagonalisation, mode identification, overlap tracking
-  ldos.py             Green-function LDOS, positivity, spectral weight, sum rule
-  analytics.py        semi-infinite surface Green function by iterative decimation
-  topology.py         winding number and analytic edge properties
-  disorder.py         disorder ensembles, hybridisation and control studies
-  sweeps.py           parameter maps and finite-size scans
-  nanophotonics.py    coupled-mode calibration of the lattice parameters
-  electromagnetics.py finite-difference frequency-domain Maxwell solver
-  figures.py          figure generation under an enforced layout contract
-tests/           verification and regression suite
-figures/         generated figures (vector PDF and 400 dpi PNG)
-results/         generated results.json
+```text
+00_LAB.ipynb
 ```
 
-## Notes on method
+Run every cell sequentially.
 
-**Mode identification.** The disorder diagnostic tracks the boundary mode by overlap with the clean
-mode rather than by proximity to zero energy, so measuring that mode's energy is not circular. A
-fixed boundary-weight threshold fails in two opposite ways: at strong disorder a stretched protected
-mode drops below it while band-edge states rise above it, and a hybridised doublet shares its weight
-between both ends so each end carries only half of `W₀`. Both behaviours are covered by regression
-tests.
+The notebook performs the complete workflow:
 
-**Controls.** Every robustness claim is paired with a trivial-phase control, because a quantity can
-be insensitive to disorder simply because a gap is large. The control has its own limits: beyond
-about `W = 0.4 t₁` strong bond disorder begins to localise states near the boundary by accident, so
-the anomaly rate is measured rather than assumed.
+- theoretical derivations,
+- model construction,
+- spectrum calculations,
+- topological analysis,
+- LDOS calculations,
+- disorder studies,
+- parameter sweeps,
+- finite-size scaling,
+- full-wave electromagnetic simulations,
+- validation tests,
+- publication-quality figure generation,
+- generation of `results/results.json`.
 
-**Figures.** The layout engine measures every element with the renderer and shrinks the axes until
-legends fit, then audits the result and raises if anything is clipped or overlapping. Nothing but
-data appears inside the plot box.
+---
 
-**Reproducibility.** Every stochastic study is driven by one seed defined at the top of the
-notebook. All linear algebra is either dense on matrices of at most 120 × 120 or a sparse direct
-solve, so no iterative tolerances enter anywhere.
+# Output
 
-## Citation
+Running the notebook automatically generates
 
-If this code is useful in your work, please cite the accompanying paper.
-Hitesh Kumar Singh, Department of Physics, MNS Government College, Bhiwani, Haryana, India.
+- Publication-quality figures (PDF and PNG)
+- Numerical datasets
+- Validation summaries
+- `results/results.json`
 
-## License
+---
 
-MIT — see `LICENSE`.
+# Requirements
+
+- Python 3.11+
+- NumPy
+- SciPy
+- Matplotlib
+- Jupyter Notebook
+
+Additional dependencies are listed in `requirements.txt`.
+
+---
+
+# Citation
+
+If you use this repository in your research, please cite the accompanying paper:
+
+> **Hitesh Kumar Singh**  
+> *Loss-suppressed hybridisation and sublattice-symmetry protection of the boundary local density of states in a non-Hermitian Su–Schrieffer–Heeger lattice.*
+
+(Journal and DOI will be added after publication.)
+
+---
+
+# License
+
+This project is intended for academic and research use.
+
+If this repository contributes to published work, please cite the accompanying article.
+
+---
+
+## Acknowledgements
+
+The author gratefully acknowledges the open-source scientific Python ecosystem, including **NumPy**, **SciPy**, **Matplotlib**, and **Jupyter**, which made this research possible.
