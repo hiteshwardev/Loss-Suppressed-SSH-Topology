@@ -1,107 +1,109 @@
-# Symmetry-resolved topological protection of the boundary local density of states in a passive non-Hermitian Su–Schrieffer–Heeger lattice
+# Sublattice-symmetry protection of the boundary LDOS in a lossy SSH lattice
 
-A fully reproducible Python research project on how the **topological edge mode**
-of a one-dimensional SSH photonic lattice with **sublattice-selective loss**
-enhances the **local density of optical states (LDOS)** at the boundary — and on
-the **symmetry conditions** under which that enhancement is genuinely
-*topologically protected* against disorder.
+Loss on one sublattice of a Su–Schrieffer–Heeger chain is usually treated as a nuisance that
+degrades an otherwise topological boundary mode. For the *stability* of that mode the opposite
+turns out to be true. This project identifies the symmetry responsible, works out its consequences,
+and confirms the picture with a full-wave solution of Maxwell's equations in a dielectric structure.
 
----
+## Results
 
-## 1. Scientific motivation
-
-Topological photonics is usually framed at the level of band structure and
-protected eigenmodes. Realistic photonic systems are lossy, so a natural
-question is whether topological features survive in a **physically measurable
-optical observable** — the LDOS, which sets the spontaneous-emission
-(Purcell) rate of an embedded emitter. We ask, and answer with controls:
-
-1. Does the topological edge mode enhance the in-gap LDOS at the boundary? **Yes** — and a trivial-phase control shows the enhancement is topological in origin.
-2. Is that enhancement *protected* against disorder? **Only against chiral-symmetric (bond) disorder**, not against chiral-breaking (on-site) disorder — exactly as the BDI symmetry class predicts.
-3. What is the role of non-Hermitian loss? It **splits** the edge mode into a protected (lossless) and a lossy partner, and it **monotonically attenuates** the enhancement (the effect is maximal in the Hermitian limit).
-
-## 2. Physical model
-
-A finite SSH chain of `N` unit cells (sites A = even index, B = odd index):
+**The chain is not chirally symmetric.** For `H = H₀ − iγP_B` the Hermitian relation
+`σ_z H σ_z = −H` fails by exactly `2γ`. Once the mean decay rate is removed by a uniform imaginary
+shift, the operator instead obeys the non-Hermitian sublattice symmetry
 
 ```
-H = Σ_n [ t1 |n,A⟩⟨n,B| + t2 |n+1,A⟩⟨n,B| + h.c. ]  −  i·γ Σ_n |n,B⟩⟨n,B|
+σ_z H̃ σ_z = −H̃†,        H̃ = H + i(γ/2)𝟙
 ```
 
-* `t1` (intra-cell), `t2` (inter-cell): real, **reciprocal** hoppings.
-* `−iγ`: loss on the **B sublattice only** (passive non-Hermiticity).
-* Operating point: `t1 = 0.8`, `t2 = 1.2` (ratio 1.5 → topological), `γ = 0.3`.
+which makes the spectrum symmetric about the imaginary axis rather than forcing eigenvalues into
+± pairs. It pins the real energy of a self-conjugate mode and constrains its decay rate not at all.
 
-Because the hopping is reciprocal, `H = Hᵀ` (complex-symmetric, **not** Hermitian),
-the spectrum is passive (`Im E ∈ [−γ, 0]`), and there is **no non-Hermitian skin
-effect**. The bulk exceptional point sits at `γ_EP = 2|t2−t1| = 0.8` (the
-operating `γ = 0.3` is well inside the unbroken phase).
+**Loss suppresses finite-size hybridisation.** A mode can leave the imaginary axis only by pairing
+with a partner at equal decay rate. Loss separates the two boundary modes in the imaginary
+direction and removes that partner, closing the channel. Under identical bond-disorder ensembles at
+N = 20 the Hermitian chain splits by 2–3 × 10⁻⁴ while the lossy chain stays at 2–4 × 10⁻¹⁶.
 
-## 3. Mathematical framework
+**The boundary doublet has its own exceptional point** at `γ = 2δ₀`, where `δ₀ ~ exp(−N/ξ)` is the
+bare Hermitian splitting. At N = 10 this sits at 2.3 × 10⁻², some 35 times below the bulk
+exceptional point at `2|t₂ − t₁|`. The two-level form `±√(δ₀² − γ²/4)` reproduces the full spectrum
+to 7 × 10⁻¹⁴.
 
-* **Topological invariant:** winding of `q(k) = t1 + t2 e^{−ik}`; `γ` does not
-  enter `q`, so `|ν|` is the Hermitian SSH value. Bulk–edge correspondence holds
-  (GBZ = BZ).
-* **Biorthogonal formalism:** for complex-symmetric `H`, left = (right)ᵀ, so the
-  inner product is the unconjugated bilinear form `Σ_i v_R[i,m] v_R[i,n]`.
-* **LDOS:** retarded Green's function `Gᴿ = (ω + iη − H)⁻¹`,
-  `ρ_i(ω) = −(1/π) Im Gᴿ_ii ≥ 0` (positivity proved in `src/nh_topo/ldos.py`).
-* **η-independent topological observable:** the boundary spectral weight of the
-  protected mode, `W₀ = 1 − (t1/t2)²` (analytic), benchmarked numerically.
+**Crossing it doubles the boundary spectral weight**, from `W₀/2` to `W₀ = 1 − (t₁/t₂)²`. The
+measured ratio is 2.0000 for every chain length from N = 8 to 30 — a parameter-free signature that
+needs no absolute calibration to observe.
 
-## 4. Repository structure
+**A full-wave calculation confirms it.** In a chain of silicon-like rods the gap-averaged boundary
+enhancement is 7.88 in the topological geometry against 0.69 in the trivial control, and material
+loss attenuates it by 2.7×, the same trade-off the lattice model predicts.
 
-```
-config/         YAML parameters (lattice, simulation, plotting, global)
-src/nh_topo/    the package — all physics lives here
-  hamiltonian.py   builders, exceptional-point threshold
-  topology.py      winding number, analytic edge weight, Bloch bands
-  spectrum.py      diagonalisation, biorthogonal density, edge-mode finder
-  ldos.py          Green's-function LDOS, η-independent edge weight, positivity
-  analytics.py     independent benchmarks (semi-infinite surface GF, bulk LDOS)
-  disorder.py      bond vs on-site disorder, trivial controls, statistics
-  nanophotonics.py self-consistent coupled-mode-theory mapping
-  sweeps.py        parameter maps, parity-safe finite-size scaling
-  plotting.py      publication-quality figures
-  config.py        configuration loader
-notebooks/      00–08 thin drivers over the package (executed, with outputs)
-figures/        generated PDF (vector) + 300-dpi PNG
-```
-
-## 5. Installation
+## Running the study
 
 ```bash
-git clone <repo-url> && cd Topological-and-Non-Hermitian-Nanophotonic-Lattices
 python -m venv .venv && source .venv/bin/activate
-pip install -e .            # or: pip install -r requirements.txt
+pip install -r requirements.txt
+jupyter lab notebook.ipynb
 ```
 
-Requires Python ≥ 3.10. Core dependencies: NumPy, SciPy, Matplotlib, PyYAML.
+`notebook.ipynb` *is* the study. Running it from top to bottom performs every calculation, writes
+every figure to `figures/` in vector and raster form, stores all numerical results in
+`results/results.json`, and prints a consolidated summary at the end. It takes roughly twelve
+minutes on a single core, most of that in the disorder ensembles and the full-wave sweeps.
 
-## 6. Figure index
+To check the implementation:
 
-| Figure | Content |
-|---|---|
-| `01_theory/01_complex_spectrum` | protected (A) vs lossy (B) edge modes in the complex plane |
-| `01_theory/02_edge_profiles` | exponential edge-mode profiles per sublattice |
-| `02_topology/01_invariant_edgeweight` | `|ν|`, analytic `W₀=1−(t1/t2)²`, `q(k)` winding |
-| `03_bands/01_bloch_bands` | complex Bloch bands (Re, Im) |
-| `03_bands/02_obc_spectrum` | OBC spectrum coloured by edge weight |
-| `03_bands/03_finite_size` | **parity-safe** finite-size scaling (enhancement, `W₀`, gap) |
-| `04_effective_mode/01_cmt_mapping` | self-consistent evanescent-coupling schematic |
-| `05_ldos/01_ldos_spectra` | edge vs bulk LDOS + semi-infinite overlay |
-| `05_ldos/02_eta_scaling` | explicit `η`-dependence of the enhancement ratio |
-| `05_ldos/03_ldos_spatial` | spatial LDOS map at `ω = 0` |
-| `06_disorder/01_protection` | **bond vs on-site protection + trivial controls** |
-| `07_parameter_sweep/01_maps` | enhancement & `W₀` maps; loss suppresses `E` |
-| `08_validation/01_cross_validation` | three independent LDOS algorithms agree |
+```bash
+pytest                      # 72 tests
+pytest -m "not slow"        # skip the full-wave solves
+```
 
-## 7. Key results & their status
+## Layout
 
-The lossy/passive SSH model is well established experimentally (e.g. Zeuner
-*et al.* PRL 2015; Weimann *et al.* Nat. Mater. 2017). The **defensible
-contribution** here is the *clean, control-equipped* demonstration that a
-**measurable optical observable (LDOS/Purcell)** inherits the BDI chiral
-protection in a **symmetry-class-specific** way — protected against bond
-disorder, not on-site — with trivial-phase controls and three-way numerical
-validation, plus an explicit `η`-independent topological order parameter `W₀`.
+```
+notebook.ipynb   the complete study: theory, methods, computation, results
+src/nh_topo/     reusable routines called from the notebook
+  hamiltonian.py      model construction
+  symmetry.py         CS-dagger classification, two-level model, edge exceptional point
+  spectrum.py         diagonalisation, mode identification, overlap tracking
+  ldos.py             Green-function LDOS, positivity, spectral weight, sum rule
+  analytics.py        semi-infinite surface Green function by iterative decimation
+  topology.py         winding number and analytic edge properties
+  disorder.py         disorder ensembles, hybridisation and control studies
+  sweeps.py           parameter maps and finite-size scans
+  nanophotonics.py    coupled-mode calibration of the lattice parameters
+  electromagnetics.py finite-difference frequency-domain Maxwell solver
+  figures.py          figure generation under an enforced layout contract
+tests/           verification and regression suite
+figures/         generated figures (vector PDF and 400 dpi PNG)
+results/         generated results.json
+```
+
+## Notes on method
+
+**Mode identification.** The disorder diagnostic tracks the boundary mode by overlap with the clean
+mode rather than by proximity to zero energy, so measuring that mode's energy is not circular. A
+fixed boundary-weight threshold fails in two opposite ways: at strong disorder a stretched protected
+mode drops below it while band-edge states rise above it, and a hybridised doublet shares its weight
+between both ends so each end carries only half of `W₀`. Both behaviours are covered by regression
+tests.
+
+**Controls.** Every robustness claim is paired with a trivial-phase control, because a quantity can
+be insensitive to disorder simply because a gap is large. The control has its own limits: beyond
+about `W = 0.4 t₁` strong bond disorder begins to localise states near the boundary by accident, so
+the anomaly rate is measured rather than assumed.
+
+**Figures.** The layout engine measures every element with the renderer and shrinks the axes until
+legends fit, then audits the result and raises if anything is clipped or overlapping. Nothing but
+data appears inside the plot box.
+
+**Reproducibility.** Every stochastic study is driven by one seed defined at the top of the
+notebook. All linear algebra is either dense on matrices of at most 120 × 120 or a sparse direct
+solve, so no iterative tolerances enter anywhere.
+
+## Citation
+
+If this code is useful in your work, please cite the accompanying paper.
+Hitesh Kumar Singh, Department of Physics, MNS Government College, Bhiwani, Haryana, India.
+
+## License
+
+MIT — see `LICENSE`.

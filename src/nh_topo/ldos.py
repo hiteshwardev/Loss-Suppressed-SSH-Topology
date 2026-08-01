@@ -166,3 +166,31 @@ def ldos_eigdecomp(H: np.ndarray, site: int, omega: float,
     c_n = vR[site, :] ** 2 / bio_norms
     z = omega + 1j * eta
     return float(-np.imag(np.sum(c_n / (z - evals))) / np.pi)
+
+
+def ldos_sum_rule(H: np.ndarray, site: int, omegas: np.ndarray,
+                  eta: float) -> float:
+    """
+    Integral of the LDOS at one site over a frequency window.
+
+    The exact spectral sum rule is int_{-inf}^{inf} rho_i(omega) domega = 1 for
+    every site. On a finite window the result falls short by the weight in the
+    Lorentzian tails, so the returned value quantifies BOTH the correctness of
+    the spectral normalisation and the adequacy of the window. Reported in the
+    manuscript alongside the window used.
+    """
+    rho = ldos_spectrum(H, site, omegas, eta)
+    return float(np.trapezoid(rho, omegas))
+
+
+def ldos_sum_rule_all_sites(H: np.ndarray, omegas: np.ndarray,
+                            eta: float) -> dict:
+    """
+    Sum rule evaluated at every site.
+
+    Returns dict with per-site values plus min/mean/max, so the check cannot be
+    passed by a single favourable site.
+    """
+    vals = np.array([ldos_sum_rule(H, i, omegas, eta) for i in range(H.shape[0])])
+    return {"per_site": vals, "min": float(vals.min()),
+            "mean": float(vals.mean()), "max": float(vals.max())}

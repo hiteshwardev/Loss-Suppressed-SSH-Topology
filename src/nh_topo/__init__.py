@@ -12,7 +12,10 @@ hamiltonian  : build_ssh, build_ssh_general, build_ssh_pbc, bloch_hamiltonian,
 topology     : winding_number, topological_invariant, localization_length,
                analytic_edge_weight, compute_bloch_bands
 spectrum     : diagonalize, biorthogonal_density, find_edge_modes,
-               fit_localization_length
+               fit_localization_length, track_mode_by_overlap,
+               clean_protected_mode
+symmetry     : chiral_residual, cs_dagger_residual, spectral_symmetry_residual,
+               count_pinned_modes, symmetry_report  (CS-dagger classification)
 ldos         : ldos_spectrum, enhancement_factor, central_bulk_site,
                edge_mode_spectral_weight, enhancement_vs_eta, ldos_eigdecomp,
                ldos_nonnegativity_min
@@ -20,8 +23,7 @@ analytics    : surface_green_function, surface_ldos, bulk_ldos  (independent ben
 disorder     : make_disordered_ssh, run_disorder_study, protected_mode_displacement
 nanophotonics: calibrate_cmt, evanescent_coupling, extract_ssh_couplings
 sweeps       : enhancement_map, edge_weight_map, finite_size_convergence
-plotting     : publication figure functions
-config       : load_all, get_physics_params
+figures      : publication-quality single-panel figure functions
 """
 
 from .hamiltonian import (build_ssh, build_ssh_general, build_ssh_pbc,
@@ -30,23 +32,34 @@ from .hamiltonian import (build_ssh, build_ssh_general, build_ssh_pbc,
 from .topology import (winding_number, topological_invariant, localization_length,
                        analytic_edge_weight, compute_bloch_bands, qk_trajectory,
                        phase_boundary)
-from .ldos import (ldos_at, ldos_spectrum, ldos_spatial_map, integrated_ldos,
+from .ldos import (ldos_sum_rule, ldos_sum_rule_all_sites, ldos_at, ldos_spectrum, ldos_spatial_map, integrated_ldos,
                    enhancement_factor, central_bulk_site, edge_mode_spectral_weight,
                    enhancement_vs_eta, ldos_eigdecomp, ldos_nonnegativity_min)
 from .analytics import (surface_green_function, surface_ldos,
                         surface_ldos_spectrum, bulk_ldos)
 from .spectrum import (diagonalize, biorthogonal_density, edge_localization_weights,
-                       find_edge_modes, fit_localization_length)
+                       find_edge_modes, fit_localization_length,
+                       track_mode_by_overlap, clean_protected_mode,
+                       localization_length_convergence)
 from .disorder import (add_onsite_disorder, make_disordered_ssh,
                        run_disorder_study, disorder_ensemble,
-                       protected_mode_displacement)
+                       protected_mode_displacement, edge_doublet_splitting,
+                       pinned_mode_count, hybridization_study,
+                       hybridization_vs_size, symmetry_residual_study,
+                       ensemble_convergence, delta0_size_scaling,
+                       fraction_below_edge_ep, trivial_control_anomalies)
 from .nanophotonics import (calibrate_cmt, evanescent_coupling, mode_profile,
                             build_resonator_chain, extract_ssh_couplings)
 from .sweeps import enhancement_map, edge_weight_map, finite_size_convergence
-from .config import load_all, get_physics_params, get_figure_dir
-from . import plotting
+from .symmetry import (sublattice_operator, shifted_hamiltonian, chiral_residual,
+                       bare_hybridization, edge_exceptional_point, two_level_splitting,
+                       cs_dagger_residual, spectral_symmetry_residual,
+                       count_pinned_modes, symmetry_class_of_perturbation,
+                       symmetry_report)
+from . import electromagnetics
+from . import figures
 
-__version__ = "2.0.0"
+__version__ = "4.0.0"
 __all__ = [
     "build_ssh", "build_ssh_general", "build_ssh_pbc", "bloch_hamiltonian",
     "exceptional_point_threshold", "verify_properties",
@@ -58,10 +71,17 @@ __all__ = [
     "surface_green_function", "surface_ldos", "surface_ldos_spectrum", "bulk_ldos",
     "diagonalize", "biorthogonal_density", "edge_localization_weights",
     "find_edge_modes", "fit_localization_length",
+    "track_mode_by_overlap", "clean_protected_mode",
+    "sublattice_operator", "shifted_hamiltonian", "chiral_residual",
+    "cs_dagger_residual", "spectral_symmetry_residual", "count_pinned_modes",
+    "symmetry_class_of_perturbation", "symmetry_report",
+    "bare_hybridization", "edge_exceptional_point", "two_level_splitting",
+    "edge_doublet_splitting", "pinned_mode_count", "hybridization_study",
+    "hybridization_vs_size", "symmetry_residual_study",
     "add_onsite_disorder", "make_disordered_ssh", "run_disorder_study",
     "disorder_ensemble", "protected_mode_displacement",
     "calibrate_cmt", "evanescent_coupling", "mode_profile",
     "build_resonator_chain", "extract_ssh_couplings",
     "enhancement_map", "edge_weight_map", "finite_size_convergence",
-    "load_all", "get_physics_params", "get_figure_dir", "plotting",
+    "figures", "electromagnetics",
 ]
