@@ -6,13 +6,13 @@ Independent, semi-analytic benchmarks for the non-Hermitian SSH LDOS.
 These provide an INDEPENDENT cross-check of the finite-chain Green's-function
 LDOS (ldos.py) and the biorthogonal eigendecomposition (ldos.ldos_eigdecomp):
 
-  * `surface_green_function` / `surface_ldos` — the surface (edge) Green's
+  * `surface_green_function` / `surface_ldos`: the surface (edge) Green's
     function of the SEMI-INFINITE SSH chain via the Lopez-Sancho / Sancho-Rubio
     iterative decimation method. This is a different algorithm (renormalisation
     of principal layers) and a different geometry (truly semi-infinite, hence
     free of finite-size contamination) from the finite-matrix inversion.
 
-  * `bulk_ldos` — the bulk (infinite-chain) LDOS from the analytic k-integrated
+  * `bulk_ldos`: the bulk (infinite-chain) LDOS from the analytic k-integrated
     Green's function, used as the in-gap bulk reference.
 
 Principal layer = one unit cell (orbitals A, B). Layer Hamiltonian and the
@@ -41,7 +41,7 @@ def surface_green_function(z, t1, t2, gamma, tol=1e-14, max_iter=200):
 
     Returns
     -------
-    g_s : ndarray (2, 2) complex  — g_s[0,0] is the edge A-site GF, g_s[1,1] the
+    g_s : ndarray (2, 2) complex; g_s[0,0] is the edge A-site GF, g_s[1,1] the
           edge B-site GF.
     """
     h, V = _layer_matrices(t1, t2, gamma)

@@ -285,9 +285,13 @@ def validate_homogeneous_medium(omega: float = 2 * np.pi * 0.30,
 # Photonic realisation of the tight-binding model
 # ---------------------------------------------------------------------------
 
-#: Geometry realising t2 / t1 = 1.5 through the evanescent-coupling calibration
-#: of `nanophotonics.calibrate_cmt`: the inter-cell gap is the smaller of the
-#: two, so the inter-cell coupling is the stronger one.
+#: Dimerised geometry, centre-to-centre spacings in units of the period a. The
+#: inter-cell spacing is the smaller of the two, so the evanescent inter-cell
+#: coupling is the stronger one and the chain is in the topological phase. No
+#: coupling ratio is extracted from the full-wave solution; the coupled-mode
+#: schematic in `nanophotonics.calibrate_cmt` only shows that an exponential
+#: evanescent law with a suitable decay length maps these spacings onto
+#: t2 / t1 = 1.5.
 TOPOLOGICAL_GEOMETRY = dict(d_intra=0.6, d_inter=0.4)
 TRIVIAL_GEOMETRY = dict(d_intra=0.4, d_inter=0.6)
 
@@ -363,29 +367,36 @@ def photonic_ldos_study(n_cells: int = 8, loss_b: float = 0.0,
 
 
 def photonic_loss_series(loss_values, n_cells: int = 8, resolution: int = 32,
-                         n_freq: int = 25, freq_range=(0.280, 0.320)) -> dict:
+                         n_freq: int = 31, freq_range=(0.275, 0.345)) -> dict:
     """
     Gap-averaged enhancement of the topological chain as material loss increases.
 
     Tests the tight-binding statement that sublattice loss attenuates the
-    magnitude of the boundary response in a real dielectric structure.
+    magnitude of the boundary response in a real dielectric structure. The
+    frequency grid and the averaging window (`GAP_WINDOW`) are the same as in
+    `photonic_ldos_study`, so the zero-loss point reproduces its gap-averaged
+    enhancement exactly. The peak edge Purcell factor over the whole sweep and
+    its frequency are returned as well.
     """
     freqs = np.linspace(*freq_range, n_freq)
     omegas = 2 * np.pi * freqs
-    enhancement, peak = [], []
+    in_gap = (freqs >= GAP_WINDOW[0]) & (freqs <= GAP_WINDOW[1])
+    enhancement, peak, peak_freq = [], [], []
 
     for loss in loss_values:
         grid, eps, edge, bulk, _ = photonic_chain(n_cells, TOPOLOGICAL_GEOMETRY,
                                                   loss, resolution)
         f_edge = purcell_spectrum(grid, omegas, eps, edge)
         f_bulk = purcell_spectrum(grid, omegas, eps, bulk)
-        enhancement.append(float(np.trapezoid(f_edge, freqs)
-                                 / np.trapezoid(f_bulk, freqs)))
+        enhancement.append(float(np.trapezoid(f_edge[in_gap], freqs[in_gap])
+                                 / np.trapezoid(f_bulk[in_gap], freqs[in_gap])))
         peak.append(float(f_edge.max()))
+        peak_freq.append(float(freqs[int(f_edge.argmax())]))
 
     return {"loss_values": np.asarray(loss_values, float),
             "gap_enhancement": np.asarray(enhancement),
-            "peak_edge": np.asarray(peak)}
+            "peak_edge": np.asarray(peak),
+            "peak_frequency": np.asarray(peak_freq)}
 
 
 def photonic_resolution_convergence(resolutions=(16, 20, 24, 32),

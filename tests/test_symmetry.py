@@ -114,3 +114,36 @@ def test_long_chains_are_always_pinned(params):
         d = nt.fraction_below_edge_ep(N, params["t1"], params["t2"],
                                       params["gamma"], 0.4, 100, 42)
         assert d["frac_pinned"] == 1.0
+
+
+def test_square_identity_is_exact_for_bond_disorder_only(params):
+    """
+    H0 anticommutes with sigma_z for any real bond configuration, so
+    Htilde^2 = H0^2 - (gamma/2)^2 exactly; a real on-site term breaks this.
+    """
+    rng = np.random.default_rng(7)
+    g = params["gamma"]
+    for W in (0.0, 0.6, 1.5):
+        Hb = nt.make_disordered_ssh(params["N"], params["t1"], params["t2"], g, W, "bond", rng)
+        assert nt.square_identity_residual(Hb, g) < 1e-12
+    Ho = nt.make_disordered_ssh(params["N"], params["t1"], params["t2"], g, 0.6, "on_site", rng)
+    assert nt.square_identity_residual(Ho, g) > 1e-3
+
+
+def test_spectrum_follows_square_root_law(params):
+    """
+    Every eigenvalue of the (bond-disordered) lossy chain is
+    -i gamma/2 +/- sqrt(eps^2 - gamma^2/4) with eps in spec(H0): the two-level
+    description of each Hermitian pair, including the edge doublet, is exact.
+    """
+    rng = np.random.default_rng(11)
+    g = params["gamma"]
+    for N in (5, 10, 20):
+        Hb = nt.make_disordered_ssh(N, params["t1"], params["t2"], g, 0.6, "bond", rng)
+        assert nt.square_root_law_residual(Hb, g) < 1e-12
+
+
+def test_unshifted_hamiltonian_obeys_cs_dagger(H, params):
+    """The uniform shift is not needed for sigma_z H sigma_z = -H^dagger itself."""
+    sz = nt.sublattice_operator(params["N"])
+    assert np.abs(sz @ H @ sz + H.conj().T).max() < 1e-14

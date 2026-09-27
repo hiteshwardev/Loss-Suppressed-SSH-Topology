@@ -17,11 +17,29 @@ from .ldos import (enhancement_factor, central_bulk_site,
                    edge_mode_spectral_weight)
 
 
-def enhancement_map(N, r_vals, gamma_vals, gap_omegas, eta,
-                    edge_site: int = 0) -> np.ndarray:
+def hoppings_for_ratio(r, mean_hopping=None):
     """
-    Integrated edge/bulk LDOS enhancement on a 2D (r = t2/t1, gamma) grid, with
-    t1 = 1. Bulk reference = central A site (parity-safe).
+    Hoppings (t1, t2) realising the ratio r = t2/t1.
+
+    With `mean_hopping` given, the pair lies on the line (t1 + t2)/2 = mean_hopping,
+    so the energy unit, the loss rate, the broadening and the gap window keep the
+    same meaning at every r and a sweep passes through the operating point
+    (t1, t2) = (0.8, 1.2) at r = 1.5 when mean_hopping = 1. Without it, t1 = 1.
+    """
+    if mean_hopping is None:
+        return 1.0, float(r)
+    t1 = 2.0 * mean_hopping / (1.0 + r)
+    return t1, r * t1
+
+
+def enhancement_map(N, r_vals, gamma_vals, gap_omegas, eta,
+                    edge_site: int = 0, mean_hopping=None) -> np.ndarray:
+    """
+    Integrated edge/bulk LDOS enhancement on a 2D (r = t2/t1, gamma) grid.
+    Bulk reference = central A site (parity-safe).
+
+    `mean_hopping` selects the parametrisation of each ratio r; see
+    `hoppings_for_ratio`. The default (None) keeps t1 = 1.
 
     Returns enh : ndarray (len(gamma_vals), len(r_vals)).
     """
@@ -29,7 +47,8 @@ def enhancement_map(N, r_vals, gamma_vals, gap_omegas, eta,
     enh = np.zeros((len(gamma_vals), len(r_vals)))
     for i, g in enumerate(gamma_vals):
         for j, r in enumerate(r_vals):
-            H = build_ssh(N, 1.0, r, g)
+            t1, t2 = hoppings_for_ratio(r, mean_hopping)
+            H = build_ssh(N, t1, t2, g)
             enh[i, j] = enhancement_factor(H, edge_site, bulk_site, gap_omegas, eta)
     return enh
 

@@ -21,8 +21,15 @@ these rules:
       journal column width and on screen.
 
 `save()` runs the audit and RAISES on violation, so a layout defect cannot
-silently reach the manuscript. `scripts/check_figures.py` re-runs the same audit
-across the whole figure set.
+silently reach the manuscript. `audit_directory()` re-runs the same audit
+across the whole figure set at the end of the notebook.
+
+UNITS
+-----
+Every energy axis (energies, loss rate, disorder width, broadening) is in units
+of the mean hopping tbar = (t1 + t2)/2, which the operating point
+(t1, t2) = (0.8, 1.2) sets to one; the plotted numbers are therefore the raw
+values of the calculation.
 
 Output: vector PDF (fonts embedded, type 42) plus 400 dpi PNG, identical content.
 """
@@ -328,8 +335,8 @@ def fig_complex_spectrum(evals, protected_idx, lossy_idx, gamma):
                alpha=0.9, zorder=1, label=r"$\mathrm{Im}\,E=-\gamma$")
     ax.axvline(0.0, color="black", linewidth=1.0, alpha=0.35, zorder=1)
 
-    ax.set_xlabel(r"$\mathrm{Re}\,E \;/\; t_1$")
-    ax.set_ylabel(r"$\mathrm{Im}\,E \;/\; t_1$")
+    ax.set_xlabel(r"$\mathrm{Re}\,E \;/\; \bar{t}$")
+    ax.set_ylabel(r"$\mathrm{Im}\,E \;/\; \bar{t}$")
     ax.set_ylim(-1.20 * gamma, 0.26 * gamma)
     _legend_right(ax)
     return fig
@@ -347,7 +354,7 @@ def fig_edge_profile(psi_protected, psi_lossy, N):
         ax.semilogy(sites, np.maximum(inten, 1e-18), marker=mk, markersize=5.5,
                     color=col, linewidth=1.7, label=lab, alpha=0.92)
     ax.set_xlabel("site index")
-    ax.set_ylabel(r"normalised intensity $|\psi|^2$")
+    ax.set_ylabel(r"normalized intensity $|\psi|^2$")
     ax.set_ylim(1e-17, 4.0)
     ax.yaxis.set_major_locator(LogLocator(base=10, numticks=7))
     ax.yaxis.set_minor_formatter(NullFormatter())
@@ -434,12 +441,12 @@ def fig_bloch_bands(k, bands, gamma):
     ax.plot(k, bands[:, 1].real, "-", color=C["bulk"], linewidth=2.6, label="upper band")
     ax.axhline(0.0, color="black", linewidth=1.0, alpha=0.4)
     ax.set_xlabel(r"$k$")
-    ax.set_ylabel(r"$\mathrm{Re}\,E(k) \;/\; t_1$")
+    ax.set_ylabel(r"$\mathrm{Re}\,E(k) \;/\; \bar{t}$")
     ax.set_xlim(-np.pi, np.pi)
     ax.set_xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
     ax.set_xticklabels([r"$-\pi$", r"$-\pi/2$", r"$0$", r"$\pi/2$", r"$\pi$"])
     _legend_right(ax)
-    _note(fig, rf"$\gamma={gamma:g}\,t_1$" "\n"
+    _note(fig, rf"$\gamma={gamma:g}\,\bar{{t}}$" "\n"
                r"both bands share $\mathrm{Im}\,E=-\gamma/2$")
     return fig
 
@@ -453,7 +460,7 @@ def fig_obc_spectrum(evals, boundary_weight, gap_hw):
                     edgecolor="black", linewidth=0.6, vmin=0, vmax=1, zorder=3)
     ax.axhspan(-gap_hw, gap_hw, color=C["grid"], alpha=0.7, zorder=1)
     ax.set_xlabel(r"eigenvalue index (sorted by $\mathrm{Re}\,E$)")
-    ax.set_ylabel(r"$\mathrm{Re}\,E \;/\; t_1$")
+    ax.set_ylabel(r"$\mathrm{Re}\,E \;/\; \bar{t}$")
     _cbar(fig, ax, sc, "boundary weight")
     return fig
 
@@ -474,10 +481,10 @@ def fig_ldos_spectra(omegas, rho_edge, rho_bulk, rho_surface, gap_hw, eta, enh):
                 label="semi-infinite surface")
     ax.axvspan(-gap_hw, gap_hw, color=C["grid"], alpha=0.75, zorder=0,
                label="integration window")
-    ax.set_xlabel(r"$\omega \;/\; t_1$")
-    ax.set_ylabel(r"LDOS $\rho \;/\; t_1^{-1}$")
+    ax.set_xlabel(r"$\omega \;/\; \bar{t}$")
+    ax.set_ylabel(r"LDOS $\rho \;/\; \bar{t}^{-1}$")
     _legend_right(ax)
-    _note(fig, rf"$\eta={eta:g}\,t_1$" "\n" rf"$\mathcal{{E}}={enh:.2f}$")
+    _note(fig, rf"$\eta={eta:g}\,\bar{{t}}$" "\n" rf"$\mathcal{{E}}={enh:.2f}$")
     return fig
 
 
@@ -487,9 +494,9 @@ def fig_eta_scaling(etas, enh, eta_operating):
     ax.plot(etas, enh, "o-", color=C["edge"], linewidth=2.6, markersize=9,
             label=r"$\mathcal{E}(\eta)$")
     ax.axvline(eta_operating, color=C["neutral"], linestyle="--", linewidth=1.8,
-               label=rf"operating $\eta={eta_operating:g}\,t_1$")
+               label=rf"operating $\eta={eta_operating:g}\,\bar{{t}}$")
     ax.set_xscale("log")
-    ax.set_xlabel(r"broadening $\eta \;/\; t_1$")
+    ax.set_xlabel(r"broadening $\eta \;/\; \bar{t}$")
     ax.set_ylabel(r"enhancement $\mathcal{E}$")
     _legend_right(ax)
     _note(fig, "the ratio is not intrinsic:\nit must be quoted with $\\eta$")
@@ -503,7 +510,7 @@ def fig_ldos_spatial(rho, N, edge_site, bulk_site):
     colors = [C["edge"] if i % 2 == 0 else C["lossy"] for i in sites]
     ax.bar(sites, rho, color=colors, edgecolor="black", linewidth=0.5, width=0.84)
     ax.set_xlabel("site index")
-    ax.set_ylabel(r"$\rho(\omega=0) \;/\; t_1^{-1}$")
+    ax.set_ylabel(r"$\rho(\omega=0) \;/\; \bar{t}^{-1}$")
     handles = [plt.Rectangle((0, 0), 1, 1, color=C["edge"]),
                plt.Rectangle((0, 0), 1, 1, color=C["lossy"])]
     ax.legend(handles, [r"$A$ sublattice (lossless)", r"$B$ sublattice (lossy)"],
@@ -551,7 +558,7 @@ def fig_map(r_vals, g_vals, data, cbar_label, log_color=False):
                        norm=norm, rasterized=True)
     ax.axvline(1.0, color="white", linestyle="--", linewidth=2.4)
     ax.set_xlabel(r"$t_2/t_1$")
-    ax.set_ylabel(r"$\gamma \;/\; t_1$")
+    ax.set_ylabel(r"$\gamma \;/\; \bar{t}$")
     _cbar(fig, ax, im, cbar_label)
     return fig
 
@@ -564,7 +571,7 @@ def fig_gamma_slices(g_vals, slices, r_labels):
     for i, (curve, lab) in enumerate(zip(slices, r_labels)):
         ax.plot(g_vals, curve, marks[i % 4], color=palette[i % len(palette)],
                 linewidth=2.4, markersize=7, label=rf"$t_2/t_1={lab}$")
-    ax.set_xlabel(r"$\gamma \;/\; t_1$")
+    ax.set_xlabel(r"$\gamma \;/\; \bar{t}$")
     ax.set_ylabel(r"enhancement $\mathcal{E}$")
     _legend_right(ax)
     _note(fig, "loss attenuates the\nresponse magnitude")
@@ -585,7 +592,7 @@ def fig_symmetry_residual(W_vals, bond, on_site):
     ax.semilogy(W_vals, np.maximum(bond, floor), "o-", color=C["edge"],
                 linewidth=2.6, markersize=10,
                 label=r"bond (CS$^\dagger$ preserving)")
-    ax.set_xlabel(r"disorder strength $W \;/\; t_1$")
+    ax.set_xlabel(r"disorder strength $W \;/\; \bar{t}$")
     ax.set_ylabel(r"$\|\sigma_z\tilde H\sigma_z+\tilde H^\dagger\|_{\max}$")
     ax.set_ylim(floor / 10, 20)
     _legend_right(ax)
@@ -605,11 +612,11 @@ def fig_displacement(W_vals, bond_mean, bond_err, onsite_mean, onsite_err):
                 fmt="o-", color=C["edge"], linewidth=2.6, markersize=10,
                 capsize=5, capthick=1.6, label="bond (symmetry preserving)")
     ax.set_yscale("log")
-    ax.set_xlabel(r"disorder strength $W \;/\; t_1$")
-    ax.set_ylabel(r"$|\mathrm{Re}\,E|$ of boundary mode $\;/\; t_1$")
+    ax.set_xlabel(r"disorder strength $W \;/\; \bar{t}$")
+    ax.set_ylabel(r"$|\mathrm{Re}\,E|$ of boundary mode $\;/\; \bar{t}$")
     ax.set_ylim(floor / 10, 2.0)
     _legend_right(ax)
-    _note(fig, "error bars: 95% CI\n200 realisations per point")
+    _note(fig, "error bars: 95% CI\n200 realizations per point")
     return fig
 
 
@@ -626,11 +633,12 @@ def fig_enhancement_disorder(W_vals, curves):
         col, fmt = style.get(label, (C["neutral"], "o-"))
         ax.errorbar(W_vals, mean, yerr=err, fmt=fmt, color=col, linewidth=2.4,
                     markersize=8, capsize=5, capthick=1.5, label=label)
-    ax.set_xlabel(r"disorder strength $W \;/\; t_1$")
+    ax.set_xlabel(r"disorder strength $W \;/\; \bar{t}$")
     ax.set_ylabel(r"enhancement $\mathcal{E}$")
     ax.set_yscale("log")
     _legend_right(ax)
-    _note(fig, "trivial controls stay near unity:\nthe effect is topological,\nnot merely gapped")
+    _note(fig, "trivial controls stay near unity\n" r"for $W \lesssim 0.4\,\bar{t}$: the effect" "\n"
+               "is topological, not merely gapped")
     return fig
 
 
@@ -641,14 +649,14 @@ def fig_hybridisation_vs_disorder(W_vals, splitting, sem, gamma_vals):
     marks, cols = ["s-", "o-", "^-"], [C["bulk"], C["edge"], C["topo"]]
     for i, g in enumerate(gamma_vals):
         lab = (r"$\gamma=0$ (Hermitian)" if g == 0
-               else rf"$\gamma={g:g}\,t_1$ (lossy)")
+               else rf"$\gamma={g:g}\,\bar{{t}}$ (lossy)")
         yerr = None if sem is None else 1.96 * np.asarray(sem[i])
         ax.errorbar(W_vals, np.maximum(splitting[i], floor), yerr=yerr,
                     fmt=marks[i % 3], color=cols[i % 3], linewidth=2.6,
                     markersize=10, capsize=5, capthick=1.5, label=lab)
     ax.set_yscale("log")
-    ax.set_xlabel(r"bond disorder strength $W \;/\; t_1$")
-    ax.set_ylabel(r"doublet splitting $\min|\mathrm{Re}\,E| \;/\; t_1$")
+    ax.set_xlabel(r"bond disorder strength $W \;/\; \bar{t}$")
+    ax.set_ylabel(r"doublet splitting $\min|\mathrm{Re}\,E| \;/\; \bar{t}$")
     ax.set_ylim(floor / 10, 1e-2)
     _legend_right(ax)
     _note(fig, "identical disorder ensembles\nin both curves")
@@ -662,7 +670,7 @@ def fig_hybridisation_vs_size(N_vals, splitting, gamma_vals, xi=None):
     marks, cols = ["s-", "o-"], [C["bulk"], C["edge"]]
     for i, g in enumerate(gamma_vals):
         lab = (r"$\gamma=0$ (Hermitian)" if g == 0
-               else rf"$\gamma={g:g}\,t_1$ (lossy)")
+               else rf"$\gamma={g:g}\,\bar{{t}}$ (lossy)")
         ax.semilogy(N_vals, np.maximum(splitting[i], floor), marks[i % 2],
                     color=cols[i % 2], linewidth=2.6, markersize=10, label=lab)
     if xi is not None:
@@ -671,7 +679,7 @@ def fig_hybridisation_vs_size(N_vals, splitting, gamma_vals, xi=None):
         ax.semilogy(nn, ref, "--", color=C["analytic"], linewidth=1.8,
                     label=rf"$\propto e^{{-N/\xi}}$, $\xi={xi:.3f}$")
     ax.set_xlabel("number of unit cells $N$")
-    ax.set_ylabel(r"doublet splitting $\min|\mathrm{Re}\,E| \;/\; t_1$")
+    ax.set_ylabel(r"doublet splitting $\min|\mathrm{Re}\,E| \;/\; \bar{t}$")
     ax.set_ylim(floor / 10, 2.0)
     _legend_right(ax)
     return fig
@@ -690,10 +698,10 @@ def fig_edge_exceptional_point(gammas, observed, delta0, analytic=None):
     ax.axvline(2.0, color=C["bulk"], linestyle="--", linewidth=2.4,
                label=r"edge EP, $\gamma=2\delta_0$")
     ax.set_xlabel(r"$\gamma / \delta_0$")
-    ax.set_ylabel(r"$\min|\mathrm{Re}\,E| \;/\; t_1$")
+    ax.set_ylabel(r"$\min|\mathrm{Re}\,E| \;/\; \bar{t}$")
     ax.set_ylim(floor / 10, 20 * delta0)
     _legend_right(ax)
-    _note(fig, r"$\gamma<2\delta_0$: hybridised")
+    _note(fig, r"$\gamma<2\delta_0$: hybridized")
     _note(fig, r"$\gamma>2\delta_0$: pinned", C["edge"])
     return fig
 
@@ -706,7 +714,7 @@ def fig_edge_weight_vs_gamma(gammas, w0, delta0, w0_analytic):
     ax.axhline(w0_analytic, color=C["analytic"], linestyle="-", linewidth=2.0,
                label=rf"$W_0=1-(t_1/t_2)^2={w0_analytic:.4f}$")
     ax.axhline(w0_analytic / 2, color=C["neutral"], linestyle=":", linewidth=2.0,
-               label=r"$W_0/2$ (hybridised)")
+               label=r"$W_0/2$ (hybridized)")
     ax.axvline(2.0, color=C["bulk"], linestyle="--", linewidth=2.4,
                label=r"edge EP, $\gamma=2\delta_0$")
     ax.set_xlabel(r"$\gamma / \delta_0$")
@@ -726,7 +734,7 @@ def fig_ensemble_convergence(n_vals, running_mean, running_err, ylabel, n_used=2
     ax.axvline(n_used, color=C["neutral"], linestyle="--", linewidth=1.8,
                label=f"ensemble used ({n_used})")
     ax.set_xscale("log")
-    ax.set_xlabel("number of realisations")
+    ax.set_xlabel("number of realizations")
     ax.set_ylabel(ylabel)
     _legend_right(ax)
     _note(fig, "error bars: 95% CI")
@@ -743,7 +751,7 @@ def fig_delta0_scaling(N_vals, delta0, xi_fit, xi_analytic):
     ax.semilogy(nn, amp * np.exp(-nn / xi_fit), "-", color=C["analytic"],
                 linewidth=2.2, label=rf"fit, $\xi_{{\rm fit}}={xi_fit:.3f}$")
     ax.set_xlabel("number of unit cells $N$")
-    ax.set_ylabel(r"$\delta_0 \;/\; t_1$")
+    ax.set_ylabel(r"$\delta_0 \;/\; \bar{t}$")
     _legend_right(ax)
     _note(fig, rf"analytic $\xi={xi_analytic:.3f}$" "\n"
                rf"deviation {abs(xi_fit - xi_analytic) / xi_analytic * 100:.1f}%")
@@ -782,8 +790,8 @@ def fig_cross_validation(omegas, rho_gf, rho_ed, rho_surf):
             label="biorthogonal eigendecomposition")
     ax.plot(omegas, rho_surf, ":", color=C["surface"], linewidth=2.8,
             label="semi-infinite decimation")
-    ax.set_xlabel(r"$\omega \;/\; t_1$")
-    ax.set_ylabel(r"LDOS $\rho \;/\; t_1^{-1}$")
+    ax.set_xlabel(r"$\omega \;/\; \bar{t}$")
+    ax.set_ylabel(r"LDOS $\rho \;/\; \bar{t}^{-1}$")
     _legend_right(ax)
     return fig
 
@@ -797,7 +805,7 @@ def fig_algorithm_difference(omegas, diff_ed, diff_surf):
     ax.semilogy(omegas, np.maximum(np.abs(diff_surf), 1e-20), "-",
                 color=C["surface"], linewidth=2.4,
                 label=r"GF $-$ semi-infinite")
-    ax.set_xlabel(r"$\omega \;/\; t_1$")
+    ax.set_xlabel(r"$\omega \;/\; \bar{t}$")
     ax.set_ylabel("absolute difference")
     _legend_right(ax)
     _note(fig, "machine precision vs\nfinite-size correction")
@@ -818,7 +826,7 @@ def fig_obc_vs_pbc(evals_obc, evals_pbc, gap_hw):
     ax.set_yticks([0, 1])
     ax.set_yticklabels(["PBC", "OBC"])
     ax.set_ylim(-0.7, 1.7)
-    ax.set_xlabel(r"$\mathrm{Re}\,E \;/\; t_1$")
+    ax.set_xlabel(r"$\mathrm{Re}\,E \;/\; \bar{t}$")
     _legend_right(ax)
     _note(fig, "in-gap states appear\nonly for open boundaries")
     return fig

@@ -182,3 +182,39 @@ def test_localization_length_converges_with_size(params):
                                            params["gamma"], [10, 20, 40])
     assert c["rel_error"][0] > c["rel_error"][-1]
     assert c["rel_error"][-1] < 1e-3
+
+
+def test_mean_hopping_line_passes_through_operating_point(params):
+    """
+    On the line (t1 + t2)/2 = 1 the ratio 1.5 is the operating point itself, so
+    the t2/t1 = 1.5 column of the parameter map must reproduce the directly
+    computed enhancement at every loss rate.
+    """
+    t1, t2 = nt.hoppings_for_ratio(1.5, mean_hopping=1.0)
+    assert np.isclose(t1, 0.8) and np.isclose(t2, 1.2)
+    assert nt.hoppings_for_ratio(1.5) == (1.0, 1.5)          # legacy parametrisation
+
+    N, eta = params["N"], 0.05
+    gap = np.linspace(-0.15, 0.15, 61)
+    gammas = [0.0, 0.3]
+    col = nt.enhancement_map(N, [1.5], gammas, gap, eta, mean_hopping=1.0)[:, 0]
+    bulk = nt.central_bulk_site(N)
+    direct = [nt.enhancement_factor(nt.build_ssh(N, 0.8, 1.2, g), 0, bulk, gap, eta)
+              for g in gammas]
+    assert np.allclose(col, direct, rtol=1e-9)
+
+
+def test_boundary_residue_is_enhanced_just_above_edge_ep(params):
+    """
+    Near coalescence the protected eigenvector approaches self-orthogonality
+    (psi^T psi -> 0), which enhances the biorthogonal residue above W0; far
+    above threshold the residue settles at W0.
+    """
+    t1, t2 = params["t1"], params["t2"]
+    N = 10
+    d0 = nt.bare_hybridization(N, t1, t2)
+    w0 = nt.analytic_edge_weight(t1, t2)
+    near = nt.edge_mode_spectral_weight(nt.build_ssh(N, t1, t2, 2.05 * d0), 0)
+    far = nt.edge_mode_spectral_weight(nt.build_ssh(N, t1, t2, 100 * d0), 0)
+    assert near > 2 * w0
+    assert abs(far - w0) / w0 < 5e-3

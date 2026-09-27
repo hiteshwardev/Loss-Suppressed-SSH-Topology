@@ -24,7 +24,7 @@ HERMITIAN CHIRAL SYMMETRY FAILS
 The anti-Hermitian diagonal violates it by exactly 2*gamma. See
 `chiral_residual`.
 
-THE CORRECT STATEMENT (CS-dagger / sublattice symmetry)
+THE CORRECT STATEMENT (CS-dagger)
 Using P_B = (I - sigma_z)/2,
 
     H = H0 - i*(gamma/2)*I + i*(gamma/2)*sigma_z ,
@@ -39,9 +39,12 @@ profile -- unchanged. Using H0^dag = H0 and sigma_z^dag = sigma_z,
 
     sigma_z Htilde sigma_z = -H0 + i*(gamma/2)*sigma_z = -Htilde^dag .      (*)
 
-Equation (*) is the non-Hermitian sublattice (chiral) symmetry, denoted CS-dagger
-or SLS in the Bernard-LeClair / Kawabata-Shiozaki-Ueda-Sato classification
-[Phys. Rev. X 9, 041015 (2019)]. See `cs_dagger_residual`.
+Equation (*) is the relation Gamma H^dag Gamma^-1 = -H with Gamma = sigma_z,
+called chiral symmetry (CS) in the Kawabata-Shiozaki-Ueda-Sato classification
+[Phys. Rev. X 9, 041015 (2019)] and written CS-dagger here to keep the Hermitian
+conjugate visible. The Hermitian-limit relation sigma_z H sigma_z = -H is
+sublattice symmetry (SLS) in the same classification; it is the one that fails.
+See `cs_dagger_residual`.
 
 SPECTRAL CONSEQUENCE -- AND WHY IT DIFFERS FROM THE HERMITIAN CASE
 Hermitian chiral symmetry forces eigenvalues into +/- pairs. CS-dagger instead
@@ -60,6 +63,29 @@ closes, because loss gives the two boundary modes DIFFERENT decay rates
 (Im E ~ 0 on A, Im E ~ -gamma on B), leaving neither with a partner. This is the
 mechanism behind the loss-suppressed hybridisation reported in
 `disorder.hybridization_study`.
+
+The uniform shift is not needed for (*) itself -- sigma_z H sigma_z = -H^dag
+holds for the unshifted H as well, because an imaginary multiple of the
+identity satisfies the relation trivially. What the shift exposes is the
+balanced form Htilde = H0 + i*(gamma/2)*sigma_z.
+
+EXACT REDUCTION TO TWO-LEVEL BLOCKS
+Because H0 anticommutes with sigma_z for ANY real bond configuration,
+
+    Htilde^2 = H0^2 - (gamma/2)^2 I       exactly.                         (**)
+
+Each Hermitian pair +/-eps of H0 spans a two-dimensional subspace that Htilde
+leaves invariant (sigma_z maps the two partners onto each other), so every
+eigenvalue of H is
+
+    E = -i*gamma/2 +/- sqrt(eps^2 - gamma^2/4) ,   eps >= 0 in spec(H0).
+
+The bulk exceptional point (smallest bulk eps = |t2 - t1|) and the edge
+exceptional point (eps = delta_0, the Hermitian doublet splitting) are two
+instances of the same formula, and the two-level description of the boundary
+doublet is exact rather than perturbative, for every bond-disordered
+realisation. On-site disorder breaks (**). See `square_identity_residual` and
+`square_root_law_residual`.
 
 WHICH PERTURBATIONS PRESERVE CS-DAGGER
   * bond (off-diagonal, real)  : H0 stays Hermitian and off-diagonal -> (*) holds
@@ -237,3 +263,41 @@ def two_level_splitting(gamma, delta0: float) -> np.ndarray:
     gamma = np.asarray(gamma, float)
     radicand = delta0 ** 2 - (gamma / 2.0) ** 2
     return np.sqrt(np.clip(radicand, 0.0, None))
+
+
+# ---------------------------------------------------------------------------
+# Exact reduction to two-level blocks
+# ---------------------------------------------------------------------------
+
+def hermitian_part(H: np.ndarray) -> np.ndarray:
+    """H0 = (H + H^dag) / 2: hoppings plus any real on-site energies."""
+    return 0.5 * (H + H.conj().T)
+
+
+def square_identity_residual(H: np.ndarray, gamma: float) -> float:
+    """
+    || Htilde^2 - (H0^2 - (gamma/2)^2 I) ||_max, Htilde = H + i(gamma/2) I.
+
+    Zero (to rounding) whenever H0 anticommutes with sigma_z, i.e. for the clean
+    chain and for any real bond disorder; nonzero once on-site disorder is added.
+    """
+    ht = shifted_hamiltonian(H, gamma)
+    h0 = hermitian_part(H)
+    target = h0 @ h0 - (gamma / 2) ** 2 * np.eye(H.shape[0])
+    return float(np.abs(ht @ ht - target).max())
+
+
+def square_root_law_residual(H: np.ndarray, gamma: float) -> float:
+    """
+    Largest distance between spec(H) and the square-root law
+    E = -i gamma/2 +/- sqrt(eps^2 - gamma^2/4), eps >= 0 in spec(H0).
+
+    The law is exact when `square_identity_residual` vanishes.
+    """
+    eps = np.linalg.eigvalsh(hermitian_part(H))
+    eps = np.sort(np.abs(eps))[::2]                  # one member of each +/- pair
+    roots = np.sqrt((eps ** 2 - (gamma / 2) ** 2).astype(complex))
+    law = np.concatenate([-0.5j * gamma + roots, -0.5j * gamma - roots])
+    ev = np.linalg.eigvals(H)
+    return float(max(np.min(np.abs(ev - z)) for z in law))
+

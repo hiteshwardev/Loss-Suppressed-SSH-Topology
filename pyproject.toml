@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nh-topo"
 version = "4.0.0"
-description = "Sublattice-symmetry protection of the boundary local density of states in a lossy Su-Schrieffer-Heeger lattice"
+description = "Symmetry protection of the boundary local density of states in a lossy Su-Schrieffer-Heeger lattice"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -19,9 +19,9 @@ keywords = [
     "finite-difference frequency-domain",
 ]
 dependencies = [
-    "numpy>=1.24,<3.0",
-    "scipy>=1.10,<2.0",
-    "matplotlib>=3.7,<4.0",
+    "numpy>=2.0,<3.0",
+    "scipy>=1.13,<2.0",
+    "matplotlib>=3.8,<4.0",
     "pillow>=9.0",
 ]
 

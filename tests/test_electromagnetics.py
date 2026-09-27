@@ -64,3 +64,18 @@ def test_topological_geometry_enhances_and_trivial_does_not():
                                    freq_range=(0.295, 0.320))
     assert study["topological"]["gap_enhancement"] > 3.0
     assert study["trivial"]["gap_enhancement"] < 1.5
+
+
+@pytest.mark.slow
+def test_loss_series_uses_the_spectra_gap_window():
+    """
+    The loss series averages over the same frequency grid and gap window as the
+    spectra, so its zero-loss point must equal the gap-averaged enhancement of
+    the topological chain.
+    """
+    kw = dict(n_cells=6, resolution=16, n_freq=7, freq_range=(0.290, 0.320))
+    study = em.photonic_ldos_study(loss_b=0.0, **kw)
+    series = em.photonic_loss_series([0.0, 1.0], **kw)
+    assert np.isclose(series["gap_enhancement"][0],
+                      study["topological"]["gap_enhancement"], rtol=1e-12)
+    assert series["gap_enhancement"][1] < series["gap_enhancement"][0]

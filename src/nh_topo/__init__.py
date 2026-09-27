@@ -1,5 +1,5 @@
 """
-nh_topo — Non-Hermitian Topological Nanophotonics
+nh_topo: non-Hermitian topological nanophotonics
 ==================================================
 A reproducible Python package for studying topological LDOS enhancement in a
 non-Hermitian (lossy) SSH photonic lattice, and the symmetry conditions under
@@ -22,7 +22,8 @@ ldos         : ldos_spectrum, enhancement_factor, central_bulk_site,
 analytics    : surface_green_function, surface_ldos, bulk_ldos  (independent benchmarks)
 disorder     : make_disordered_ssh, run_disorder_study, protected_mode_displacement
 nanophotonics: calibrate_cmt, evanescent_coupling, extract_ssh_couplings
-sweeps       : enhancement_map, edge_weight_map, finite_size_convergence
+sweeps       : enhancement_map, hoppings_for_ratio, edge_weight_map,
+               finite_size_convergence
 figures      : publication-quality single-panel figure functions
 """
 
@@ -50,12 +51,14 @@ from .disorder import (add_onsite_disorder, make_disordered_ssh,
                        fraction_below_edge_ep, trivial_control_anomalies)
 from .nanophotonics import (calibrate_cmt, evanescent_coupling, mode_profile,
                             build_resonator_chain, extract_ssh_couplings)
-from .sweeps import enhancement_map, edge_weight_map, finite_size_convergence
+from .sweeps import (enhancement_map, hoppings_for_ratio, edge_weight_map,
+                     finite_size_convergence)
 from .symmetry import (sublattice_operator, shifted_hamiltonian, chiral_residual,
                        bare_hybridization, edge_exceptional_point, two_level_splitting,
                        cs_dagger_residual, spectral_symmetry_residual,
                        count_pinned_modes, symmetry_class_of_perturbation,
-                       symmetry_report)
+                       symmetry_report, hermitian_part, square_identity_residual,
+                       square_root_law_residual)
 from . import electromagnetics
 from . import figures
 
@@ -75,6 +78,7 @@ __all__ = [
     "sublattice_operator", "shifted_hamiltonian", "chiral_residual",
     "cs_dagger_residual", "spectral_symmetry_residual", "count_pinned_modes",
     "symmetry_class_of_perturbation", "symmetry_report",
+    "hermitian_part", "square_identity_residual", "square_root_law_residual",
     "bare_hybridization", "edge_exceptional_point", "two_level_splitting",
     "edge_doublet_splitting", "pinned_mode_count", "hybridization_study",
     "hybridization_vs_size", "symmetry_residual_study",
@@ -82,6 +86,7 @@ __all__ = [
     "disorder_ensemble", "protected_mode_displacement",
     "calibrate_cmt", "evanescent_coupling", "mode_profile",
     "build_resonator_chain", "extract_ssh_couplings",
-    "enhancement_map", "edge_weight_map", "finite_size_convergence",
+    "enhancement_map", "hoppings_for_ratio", "edge_weight_map",
+    "finite_size_convergence",
     "figures", "electromagnetics",
 ]
