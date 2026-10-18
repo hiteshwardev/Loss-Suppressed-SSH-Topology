@@ -1,131 +1,54 @@
-# Symmetry protection of the boundary LDOS in a lossy SSH lattice
+# Loss-Suppressed Hybridization and Symmetry Protection of the Boundary Local Density of States in a Non-Hermitian Su-Schrieffer-Heeger Lattice
 
-Loss on one sublattice of a Su–Schrieffer–Heeger chain is usually treated as a nuisance that
-degrades an otherwise topological boundary mode. For the *stability* of that mode the opposite
-turns out to be true. This project identifies the symmetry responsible, works out its consequences,
-and confirms the picture with a full-wave solution of Maxwell's equations in a dielectric structure.
+**Author:** Hitesh Kumar Singh · [ORCID: 0009-0008-1583-4848](https://orcid.org/0009-0008-1583-4848)
+*Department of Physics, Kurukshetra University, Kurukshetra, Haryana, India*
 
-## Results
+---
 
-Energies are measured in units of the mean hopping t̄ = (t₁ + t₂)/2; the operating point
-t₁ = 0.8, t₂ = 1.2 (t₂/t₁ = 1.5), γ = 0.3, N = 20 sets t̄ = 1.
+## Abstract
 
-**The chain is not chirally symmetric in the Hermitian sense.** For `H = H₀ − iγP_B` the relation
-`σ_z H σ_z = −H` fails by exactly `2γ`. The operator instead obeys `σ_z H σ_z = −H†`, the chiral
-symmetry of the Kawabata–Shiozaki–Ueda–Sato classification (written CS† here), which makes the
-spectrum symmetric about the imaginary axis rather than forcing eigenvalues into ± pairs. It pins
-the real energy of a self-conjugate mode and constrains its decay rate not at all. Bond disorder
-preserves it exactly; on-site disorder breaks it.
+In a finite Su-Schrieffer-Heeger (SSH) chain, topological boundary modes hybridize and split due to finite-size effects. This work investigates how sublattice-selective loss suppresses this hybridization and identifies the symmetry that protects the boundary-state energy. The key result is an exact reduction: for arbitrary real bond configurations, the shifted Hamiltonian H + iγ/2 satisfies H̃² = H₀² − γ²/4. Each pair of Hermitian eigenvalues ±s becomes −iγ/2 ± √(s² − γ²/4), giving a boundary exceptional point at γ = 2δ₀, where δ₀ is the finite-size hybridization splitting. The symmetry σ<sub>z</sub> H σ<sub>z</sub> = −H† pins the real energy of an unpaired mode and explains its robustness against real bond disorder, whereas on-site disorder breaks the protection. For a chain of ten unit cells, the boundary exceptional point lies 34.5 times below the bulk exceptional point. Crossing it doubles the boundary spectral weight, with numerical agreement within 2 × 10⁻⁴ for chains of 8–30 unit cells. Finite-difference frequency-domain simulations of a dielectric-rod chain show a gap-averaged boundary Purcell enhancement of 7.88 in the topological geometry, compared with 0.69 in a trivial control; sublattice-selective material loss reduces it to 1.62.
 
-**Every eigenvalue follows a square-root law.** The shifted operator `H̃ = H + i(γ/2)𝟙 = H₀ + i(γ/2)σ_z`
-is the balanced gain–loss chain, and because `H₀` anticommutes with `σ_z` for any real bond
-configuration, `H̃² = H₀² − (γ/2)²𝟙` exactly. Every eigenvalue of `H` is therefore
-`−iγ/2 ± √(ε² − γ²/4)` with `ε ≥ 0` an eigenvalue of `H₀`: the bulk exceptional point
-(`ε = |t₂ − t₁|`) and the boundary-doublet exceptional point (`ε = δ₀`) are two instances of one
-formula, and the two-level description of the doublet is exact for every bond-disordered chain.
+## Core Objectives
 
-**Loss suppresses finite-size hybridisation.** Once `γ > 2δ₀`, with `δ₀ ~ exp(−N/ξ)` the bare
-Hermitian splitting, the doublet stays at `Re E = 0`. Under identical bond-disorder ensembles at
-N = 20 the Hermitian chain splits by 2.0–2.8 × 10⁻⁴ t̄ while the lossy chain stays at 2–4 × 10⁻¹⁶ t̄.
-At N = 10 the edge exceptional point sits at 2.3 × 10⁻² t̄, some 35 times below the bulk one.
+- Explain why and how sublattice-selective loss suppresses finite-size hybridization of SSH boundary modes.
+- Identify the symmetry that protects the boundary-mode energy in a lossy chain and test it against symmetry-preserving and symmetry-breaking disorder.
+- Connect the boundary physics to a measurable observable, the local density of states (LDOS) and emitter Purcell enhancement, in a full-wave photonic structure.
 
-**Crossing it doubles the boundary spectral weight**, from `W₀/2` to `W₀ = 1 − (t₁/t₂)²`. The
-measured ratio is 2.0000 for every chain length from N = 8 to 30.
+## Scientific Significance
 
-**A full-wave calculation confirms the boundary enhancement.** In a finite-difference
-frequency-domain solution for a chain of silicon-like rods, the gap-averaged edge-to-bulk Purcell
-ratio is 7.88 in the topological geometry against 0.69 in the trivial control, and material loss
-on the B rods reduces it to 1.62 at Im ε = 2.
+Absorption and radiation are unavoidable in photonic structures, so effective Hamiltonians are non-Hermitian. Recovery of zero modes in finite non-Hermitian lattices has been observed, but what protects them under disorder, and what the recovery does to an emitter's response, was less settled. This project gives an exact, realization-by-realization description that does not rely on PT symmetry or perturbation theory, and links it to emission signatures relevant to photonic design.
 
-## Running the study
+## Methodological Approach
 
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-jupyter lab notebook.ipynb
-```
+- **Analytical:** symmetry classification (the chiral symmetry σ<sub>z</sub> H σ<sub>z</sub> = −H† of the non-Hermitian classification), and an exact reduction to two-level blocks via the shifted Hamiltonian.
+- **Tight-binding numerics:** LDOS computed three ways (direct resolvent, biorthogonal eigendecomposition, independent semi-infinite surface Green function), with 200 seeded realizations per disorder strength and trivial-phase controls whose reliability is measured.
+- **Full-wave validation:** a 2D TM finite-difference frequency-domain solver with complex coordinate stretching, validated against the Hankel-function Green function with second-order grid convergence.
 
-`notebook.ipynb` *is* the study. Running it from top to bottom performs every calculation, writes
-every figure to `figures/` in vector and raster form, stores all numerical results in
-`results/results.json`, and prints a consolidated summary at the end. It takes roughly seven
-minutes on a single core, most of that in the disorder ensembles and the full-wave sweeps.
+## Contributions
 
-To check the implementation:
+1. An exact (not merely effective) two-level description, valid for any real bond configuration, that places the boundary exceptional point at γ = 2δ₀ in each disordered realization.
+2. A symmetry explanation of the pinning (chiral symmetry in the non-Hermitian sense), separating bond disorder (preserves it) from on-site disorder (breaks it).
+3. A parameter-free LDOS signature of the transition: the boundary spectral weight doubles from W₀/2 to W₀ = 1 − (t₁/t₂)².
+4. A full-wave demonstration of the topological boundary enhancement, its absence in a trivial control and its attenuation by sublattice loss.
 
-```bash
-pytest                      # 78 tests
-pytest -m "not slow"        # skip the full-wave solves
-```
+5. **Positioning relative to prior work.** An effective two-state description of the edge-state exceptional point in PT-symmetric SSH chains is already established (e.g. arXiv:2204.06932; arXiv:2511.13088). The contribution here is the exact reduction for arbitrary real bond configurations, its application to a passive chain with loss on one sublattice, the symmetry analysis of the pinning, the LDOS weight doubling and the full-wave validation.
 
-## Layout
+## Key Findings
 
-```
-notebook.ipynb   the complete study: theory, methods, computation, results
-src/nh_topo/     reusable routines called from the notebook
-  hamiltonian.py      model construction
-  symmetry.py         CS-dagger classification, two-level model, edge exceptional point
-  spectrum.py         diagonalisation, mode identification, overlap tracking
-  ldos.py             Green-function LDOS, positivity, spectral weight, sum rule
-  analytics.py        semi-infinite surface Green function by iterative decimation
-  topology.py         winding number and analytic edge properties
-  disorder.py         disorder ensembles, hybridisation and control studies
-  sweeps.py           parameter maps and finite-size scans
-  nanophotonics.py    coupled-mode calibration of the lattice parameters
-  electromagnetics.py finite-difference frequency-domain Maxwell solver
-  figures.py          figure generation under an enforced layout contract
-tests/           verification and regression suite
-figures/         generated figures (vector PDF and 400 dpi PNG)
-results/         generated results.json
-```
+- Hybridization splitting is suppressed from about 10⁻⁴ t̄ to machine precision (≈ 10⁻¹⁶ t̄) under bond disorder; the boundary exceptional point lies 34.5 times below the bulk one at ten unit cells.
+- Real energy displacement stays at machine zero under bond disorder up to W = t̄ and grows from 0.0150 t̄ to 0.2145 t̄ under on-site disorder.
+- The edge-to-bulk LDOS enhancement falls by a factor of 6.09 between γ = 0 and the operating point (a broadening-dependent measure, stated at η = 0.05 t̄).
+- Full-wave gap-averaged edge-to-bulk Purcell enhancement: 7.88 (topological), 0.69 (trivial), 1.62 with strong sublattice loss.
 
-## Figures and the manuscript
+## Scope and Limitations
 
-The file names in `figures/` follow the order of the notebook. In the manuscript they appear as
-follows (S = Supplemental Material).
+Most results use a tight-binding model. The full-wave calculation does not resolve the edge exceptional point and is compared with the lattice model qualitatively. Site-dependent loss, nonreciprocity and two dimensions are open questions stated in the manuscript. The Supplemental Material contains the convergence and verification studies.
 
-| File | Paper | File | Paper |
-|---|---|---|---|
-| fig01_symmetry_residual | Fig. S1 | fig14_displacement | Fig. 8 |
-| fig02_complex_spectrum | Fig. 1 | fig15_enhancement_disorder | Fig. 9 |
-| fig03_edge_profile | Fig. 2 | fig16_trivial_control_anomalies | Fig. S7 |
-| fig04_localization_fit | Fig. S2 | fig17_enhancement_map | Fig. 10 |
-| fig05_localization_convergence | Fig. S3 | fig18_gamma_slices | Fig. S8 |
-| fig06_ldos_spectra | Fig. 3 | fig19_cross_validation | Fig. S9 |
-| fig07_eta_scaling | Fig. S4 | fig20_obc_vs_pbc | Fig. S10 |
-| fig08_edge_weight | Fig. S5 | fig21_sum_rule | Fig. S11 |
-| fig09_hybridisation_vs_disorder | Fig. 4 | fig22_grid_convergence | Fig. S12 |
-| fig10_hybridisation_vs_size | Fig. 5 | fig23_ensemble_convergence | Fig. S13 |
-| fig11_delta0_scaling | Fig. S6 | fig24_fdfd_benchmark | Fig. S14 |
-| fig12_edge_exceptional_point | Fig. 6 | fig25_photonic_spectra | Fig. 11 |
-| fig13_edge_weight_vs_gamma | Fig. 7 | fig26_photonic_loss | Fig. 12 |
+## Roles
 
-## Notes on method
+Hitesh Kumar Singh is the sole author. Hitesh Kumar Singh conceived the study, derived the exact reduction and symmetry analysis, implemented the numerical and full-wave calculations, carried out the validation and wrote the manuscript.
 
-**Mode identification.** The disorder diagnostic tracks the boundary mode by overlap with the clean
-mode rather than by proximity to zero energy, so measuring that mode's energy is not circular. A
-fixed boundary-weight threshold fails in two opposite ways: at strong disorder a stretched protected
-mode drops below it while band-edge states rise above it, and a hybridised doublet shares its weight
-between both ends so each end carries only half of `W₀`. Both behaviours are covered by regression
-tests.
+## Reproducibility and Availability
 
-**Controls.** Every robustness claim is paired with a trivial-phase control, because a quantity can
-be insensitive to disorder simply because a gap is large. The control has its own limits: beyond
-about `W = 0.4 t̄` strong bond disorder begins to localise states near the boundary by accident, so
-the anomaly rate is measured rather than assumed.
-
-**Figures.** The layout engine measures every element with the renderer and shrinks the axes until
-legends fit, then audits the result and raises if anything is clipped or overlapping. Nothing but
-data appears inside the plot box.
-
-**Reproducibility.** Every stochastic study is driven by one seed defined at the top of the
-notebook. All linear algebra is either dense on matrices of at most 120 × 120 or a sparse direct
-solve, so no iterative tolerances enter anywhere.
-
-## Citation
-
-If this code is useful in your work, please cite the accompanying paper.
-Hitesh Kumar Singh, Department of Physics, Kurukshetra University, Kurukshetra, Haryana, India.
-
-## License
-
-MIT; see `LICENSE`.
+The repository contains a notebook that reproduces every figure and numerical result. The manuscript reports 78 automated tests that encode its claims.
